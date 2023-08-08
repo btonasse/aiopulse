@@ -1,10 +1,22 @@
+from enum import StrEnum, auto
 from typing import Any
 
 import aiohttp
-from custom_types import Method
 
 from .builder import RequestParamsBuilder
 from .processing import ProcessedResponse, ResponseProcessor
+
+
+class Method(StrEnum):
+    """
+    HTTP methods enum
+    """
+
+    GET = auto()
+    POST = auto()
+    PUT = auto()
+    PATCH = auto()
+    DELETE = auto()
 
 
 class Query:
@@ -17,8 +29,8 @@ class Query:
         return str(self._params.url)
 
     @property
-    def method(self) -> Method:
-        return self._params.method
+    def method(self) -> str:
+        return self._params.method.name
 
     @property
     def payload(self) -> dict[str, Any]:

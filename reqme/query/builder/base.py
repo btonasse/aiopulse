@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from custom_types import Method
+from query import Method
 from yarl import URL
 
 
