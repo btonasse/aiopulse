@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 aiohttp = "*"
 yarl = "*"
+pydantic = "*"
 
 [dev-packages]
 black = "*"
