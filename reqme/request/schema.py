@@ -48,5 +48,6 @@ class GenericSchema(SchemaBase):
         # No validation at all. This is the fallback schema.
         return True
 
+    # Todo. This is a weird coupling. Figure out an alternative
     def build_request(self, processor: ResponseProcessor) -> Request:
         return Request(_response_processor=processor, **self.model_dump())
