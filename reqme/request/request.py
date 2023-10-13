@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from enum import StrEnum, auto
-from typing import Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any, Awaitable
 
 import aiohttp
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from yarl import URL
+
+if TYPE_CHECKING:
+    from .response import ProcessedResponse, ResponseProcessor
+
+from enum import StrEnum, auto
 
 
 class Method(StrEnum):
@@ -27,15 +31,18 @@ class Method(StrEnum):
                 return member
 
 
-class RequestParams(BaseModel):
+class Request(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    description: str
     url: URL
     method: Method
     body: dict[str, Any] = Field(default_factory=dict)
     headers: dict[str, str] = Field(default_factory=dict)
     form_data: dict[str, Any] = Field(default_factory=dict)
     query_params: dict[str, str] = Field(default_factory=dict)
+    chain: list[Request] | None = None
+    _response_processor: ResponseProcessor
 
     @field_validator("url", mode="before")
     @classmethod
@@ -49,67 +56,15 @@ class RequestParams(BaseModel):
         return url
 
     @model_validator(mode="after")
-    def either_payload_or_formdata(self) -> RequestParams:
+    def either_payload_or_formdata(self) -> Request:
         if self.body and self.form_data:
             raise ValueError("Request cannot have both a body and form data")
         return self
 
     @model_validator(mode="after")
-    def add_query_params(self) -> RequestParams:
+    def add_query_params(self) -> Request:
         self.url = self.url.with_query(self.query_params)
         return self
 
-
-class ProcessedResponse(BaseModel):
-    ok: bool
-    status: int = Field(ge=100, lt=600)
-    content: list[dict[str, Any]] | None
-    error: str | None
-    request: Request
-    next_request: Request | None = None
-
-
-ResponseProcessor = Callable[[aiohttp.ClientResponse], Awaitable[ProcessedResponse]]
-
-ParamsBuilder = Callable[[dict[str, Any]], RequestParams]
-
-
-class Request:
-    _params: RequestParams
-    _processor: ResponseProcessor
-
-    def __init__(
-        self,
-        raw_params: dict[str, Any],
-        params_builder: ParamsBuilder,
-        response_processor: ResponseProcessor,
-    ) -> None:
-        self._params = params_builder(raw_params)
-        self._processor = response_processor
-
-    @property
-    def url(self) -> str:
-        return str(self._params.url)
-
-    @property
-    def method(self) -> str:
-        return self._params.method.name
-
-    @property
-    def body(self) -> dict[str, Any]:
-        return self._params.body
-
-    @property
-    def headers(self) -> dict[str, str]:
-        return self._params.headers
-
-    @property
-    def form_data(self) -> dict[str, Any]:
-        return self._params.form_data
-
-    @property
-    def query_params(self) -> dict[str, str]:
-        return self._params.query_params
-
     async def process_response(self, response: aiohttp.ClientResponse) -> Awaitable[ProcessedResponse]:
-        return self._processor(response)
+        return self._response_processor(response, self)

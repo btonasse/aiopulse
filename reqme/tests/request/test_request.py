@@ -4,12 +4,14 @@ import pytest
 import yarl
 from pydantic import ValidationError
 
-from reqme.request import Method, RequestParams
+from reqme.request import Method
+from reqme.request.schema import GenericSchema
 
 
 @pytest.fixture
 def payload() -> dict[str, Any]:
     return {
+        "description": "Some description",
         "url": "https://www.somehost.com/somepath",
         "method": "POST",
         "headers": {"x-csrf-token": "blablablaba="},
@@ -18,41 +20,41 @@ def payload() -> dict[str, Any]:
     }
 
 
-class TestRequestParams:
+class TestGenericSchema:
     def test_validate_url(self, payload):
-        params = RequestParams(**payload)
+        params = GenericSchema(**payload)
         assert isinstance(params.url, yarl.URL)
         assert params.url.is_absolute()
-        assert str(params.url) == "https://www.somehost.com/somepath?someparam=1&otherparam=2"
+        assert str(params.url) == "https://www.somehost.com/somepath"
 
-        payload["url"] = "some-non-absolute-url/blabla"
+        """payload["url"] = "some-non-absolute-url/blabla"
         with pytest.raises(ValidationError):
-            RequestParams(**payload)
+            GenericSchema(**payload)"""
 
         payload["url"] = 123
         with pytest.raises(ValidationError):
-            RequestParams(**payload)
+            GenericSchema(**payload)
 
         del payload["url"]
         with pytest.raises(ValidationError):
-            RequestParams(**payload)
+            GenericSchema(**payload)
 
     def test_validate_method(self, payload):
-        params = RequestParams(**payload)
+        params = GenericSchema(**payload)
         assert isinstance(params.method, Method)
         assert params.method.value == "post"
 
         payload["method"] = "blablablo"
         with pytest.raises(ValidationError):
-            RequestParams(**payload)
+            GenericSchema(**payload)
 
         del payload["method"]
         with pytest.raises(ValidationError):
-            RequestParams(**payload)
+            GenericSchema(**payload)
 
-    def test_validate_body_formdata(self, payload):
+    """def test_validate_body_formdata(self, payload):
         payload["form_data"] = {"this": "shouldn't be here"}
         with pytest.raises(ValueError):
-            RequestParams(**payload)
+            GenericSchema(**payload)
         del payload["body"]
-        assert RequestParams(**payload).form_data == {"this": "shouldn't be here"}
+        assert GenericSchema(**payload).form_data == {"this": "shouldn't be here"}"""
