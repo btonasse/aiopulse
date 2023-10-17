@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Awaitable
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -66,5 +66,5 @@ class Request(BaseModel):
         self.url = self.url.with_query(self.query_params)
         return self
 
-    async def process_response(self, response: aiohttp.ClientResponse) -> Awaitable[ProcessedResponse]:
+    async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:
         return self._response_processor(response, self)

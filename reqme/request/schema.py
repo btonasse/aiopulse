@@ -3,19 +3,18 @@ from __future__ import annotations
 import abc
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from yarl import URL
 
-from . import Method, Request
-from .response import ResponseProcessor
+from . import Method
 
 
-class SchemaBase(BaseModel, abc.ABC):
+class InputSchemaBase(BaseModel, abc.ABC):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     description: str
     url: URL
-    chain: list[SchemaBase] | None = None
+    chain: list[InputSchemaBase] | None = None
 
     @field_validator("url", mode="before")
     @classmethod
@@ -31,12 +30,8 @@ class SchemaBase(BaseModel, abc.ABC):
     def is_match(cls, data: Any) -> bool:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def build_request(self, processor: ResponseProcessor) -> Request:
-        raise NotImplementedError
 
-
-class GenericSchema(SchemaBase):
+class GenericInputSchema(InputSchemaBase):
     method: Method
     body: dict[str, Any] = Field(default_factory=dict)
     headers: dict[str, str] = Field(default_factory=dict)
@@ -47,7 +42,3 @@ class GenericSchema(SchemaBase):
     def is_match(cls, data: Any) -> bool:
         # No validation at all. This is the fallback schema.
         return True
-
-    # Todo. This is a weird coupling. Figure out an alternative
-    def build_request(self, processor: ResponseProcessor) -> Request:
-        return Request(_response_processor=processor, **self.model_dump())

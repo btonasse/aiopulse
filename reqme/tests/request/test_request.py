@@ -6,7 +6,7 @@ import yarl
 from pydantic import ValidationError
 
 from reqme.request import Method
-from reqme.request.schema import GenericSchema
+from reqme.request.schema import GenericInputSchema
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ class TestGenericSchema:
     )
     def test_validate_url(self, payload, expectation):
         with expectation:
-            params = GenericSchema(**payload)
+            params = GenericInputSchema(**payload)
             assert isinstance(params.url, yarl.URL)
 
     @pytest.mark.parametrize(
@@ -57,9 +57,9 @@ class TestGenericSchema:
     )
     def test_validate_method(self, payload, expectation):
         with expectation:
-            params = GenericSchema(**payload)
+            params = GenericInputSchema(**payload)
             assert isinstance(params.method, Method)
             assert params.method.value == "post"
 
     def test_is_match(self, payload):
-        assert GenericSchema.is_match(payload)
+        assert GenericInputSchema.is_match(payload)

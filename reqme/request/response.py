@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 
 import aiohttp
 from pydantic import BaseModel, Field
@@ -15,8 +15,19 @@ class ProcessedResponse(BaseModel):
     next_request: Request | None = None
 
 
-ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], Awaitable[ProcessedResponse]]
+ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], ProcessedResponse]
 
 
-async def simple_processor(response: aiohttp.ClientResponse) -> Awaitable[ProcessedResponse]:
-    raise NotImplementedError
+async def simple_json_processor(response: aiohttp.ClientResponse, request: Request) -> ProcessedResponse:
+    if response.status >= 400:
+        content = None
+        error = response.reason
+    else:
+        resp_json: dict[str, Any] | list[dict[str, Any]] = await response.json()
+        error = None
+        if isinstance(resp_json, dict):
+            content = [resp_json]
+        else:
+            content = resp_json
+
+    return ProcessedResponse(ok=response.ok, status=response.status, content=content, error=error, request=request, next_request=None)
