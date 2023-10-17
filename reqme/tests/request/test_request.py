@@ -1,65 +1,69 @@
 from contextlib import nullcontext as does_not_raise
-from typing import Any
 
 import pytest
 import yarl
 from pydantic import ValidationError
 
-from reqme.request import Method
-from reqme.request.schema import GenericInputSchema
+from reqme.request import Method, Request
+from reqme.tests.fixtures import dummy_processor, payload
 
 
-@pytest.fixture
-def payload(request) -> dict[str, Any]:
-    data = {
-        "description": "Some description",
-        "url": "https://www.somehost.com/somepath",
-        "method": "POST",
-        "headers": {"x-csrf-token": "blablablaba="},
-        "body": {"heyjude": "dontmakemecry", "lalala": 123},
-        "query_params": {"someparam": "1", "otherparam": "2"},
-    }
-    params = getattr(request, "param", None)
-    if not params:
-        return data
-    for k, v in params.items():
-        if k == "remove_key" and v in data.keys():
-            del data[v]
-        else:
-            data[k] = v
-    return data
+def test_method_enum():
+    assert Method("post") == Method("POST")
+    with pytest.raises(ValueError):
+        Method("blue")
 
 
-class TestGenericSchema:
+class TestRequest:
+    @pytest.mark.parametrize(
+        "payload, expectation",
+        [
+            ({"response_processor": dummy_processor}, does_not_raise()),
+            ({}, pytest.raises(ValidationError)),
+            ({"response_processor": 42}, pytest.raises(ValidationError)),
+        ],
+        indirect=["payload"],
+    )
+    def test_validate_response_processor(self, payload, expectation):
+        with expectation:
+            assert Request(**payload)._response_processor == dummy_processor
+
     @pytest.mark.parametrize(
         "payload, expectation",
         [
             ({}, does_not_raise()),
-            ({"url": "asdasd"}, does_not_raise()),
+            ({"url": "asdasd"}, pytest.raises(ValidationError)),
             ({"url": 123}, pytest.raises(ValidationError)),
             ({"remove_key": "url"}, pytest.raises(ValidationError)),
         ],
         indirect=["payload"],
     )
-    def test_validate_url(self, payload, expectation):
+    def test_validate_url(self, payload, expectation, dummy_processor):
         with expectation:
-            params = GenericInputSchema(**payload)
-            assert isinstance(params.url, yarl.URL)
+            req = Request(**payload, response_processor=dummy_processor)
+            assert isinstance(req.url, yarl.URL)
 
     @pytest.mark.parametrize(
         "payload, expectation",
         [
             ({}, does_not_raise()),
-            ({"method": "blablablo"}, pytest.raises(ValidationError)),
-            ({"remove_key": "method"}, pytest.raises(ValidationError)),
+            ({"form_data": {"as": 123}}, pytest.raises(ValidationError)),
+            ({"remove_key": "body", "form_data": {"as": 123}}, does_not_raise()),
         ],
         indirect=["payload"],
     )
-    def test_validate_method(self, payload, expectation):
+    def test_either_body_or_form(self, payload, expectation, dummy_processor):
         with expectation:
-            params = GenericInputSchema(**payload)
-            assert isinstance(params.method, Method)
-            assert params.method.value == "post"
+            Request(**payload, response_processor=dummy_processor)
 
-    def test_is_match(self, payload):
-        assert GenericInputSchema.is_match(payload)
+    @pytest.mark.parametrize(
+        "payload, expectation",
+        [
+            ({}, "https://www.somehost.com/somepath?someparam=1&otherparam=2"),
+            ({"query_params": {}}, "https://www.somehost.com/somepath"),
+            ({"remove_key": "query_params"}, "https://www.somehost.com/somepath"),
+        ],
+        indirect=["payload"],
+    )
+    def test_add_query_params(self, payload, expectation, dummy_processor):
+        assert str(Request(**payload, response_processor=dummy_processor).url) == expectation

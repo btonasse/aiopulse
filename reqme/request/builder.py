@@ -17,7 +17,7 @@ class BuilderBase(BaseModel, abc.ABC):
 
 class GenericBuilder(BuilderBase):
     def build_request(self, input_data: InputSchemaBase, response_processor: ResponseProcessor) -> Request:
-        return Request(_response_processor=response_processor, **input_data.model_dump())
+        return Request(response_processor=response_processor, **input_data.model_dump())
 
 
 class BaseURLBuilder(BuilderBase):
@@ -44,4 +44,4 @@ class BaseURLBuilder(BuilderBase):
         query = input_data.url.query  # yarl for some reason doesn't allow for joining a path without destroying query params. We need to prevent this here.
         joined_url = self.base_url.join(input_data.url)
         with_query = joined_url.with_query(query)
-        return Request(_response_processor=response_processor, url=with_query, **input_data.model_dump(exclude={"url"}))
+        return Request(response_processor=response_processor, url=with_query, **input_data.model_dump(exclude={"url"}))

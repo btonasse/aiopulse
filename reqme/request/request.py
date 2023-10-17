@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import aiohttp
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
+from pydantic.fields import ModelPrivateAttr
 from yarl import URL
 
 if TYPE_CHECKING:
@@ -43,6 +44,21 @@ class Request(BaseModel):
     query_params: dict[str, str] = Field(default_factory=dict)
     chain: list[Request] | None = None
     _response_processor: ResponseProcessor
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        processor: Any = data.get("response_processor")
+        self._response_processor = processor
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_response_processor(cls, data: Any) -> Any:
+        try:
+            processor = data.get("response_processor")
+            assert processor is not None and isinstance(processor, Callable)
+        except AttributeError as err:
+            raise ValueError(str(err))
+        return data
 
     @field_validator("url", mode="before")
     @classmethod
