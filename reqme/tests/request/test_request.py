@@ -5,7 +5,14 @@ import yarl
 from pydantic import ValidationError
 
 from reqme.request import Method, Request
-from reqme.tests.fixtures import dummy_processor, payload
+
+
+@pytest.fixture
+def dummy_processor():
+    def func():
+        return 42
+
+    return func
 
 
 def test_method_enum():

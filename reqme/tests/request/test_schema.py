@@ -6,7 +6,8 @@ from pydantic import ValidationError
 
 from reqme.request import Method
 from reqme.request.schema import GenericInputSchema
-from reqme.tests.fixtures import payload
+
+# from reqme.tests.fixtures import payload
 
 
 class TestGenericSchema:
