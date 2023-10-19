@@ -22,3 +22,11 @@ def payload(request) -> dict[str, Any]:
         else:
             data[k] = v
     return data
+
+
+@pytest.fixture
+def dummy_processor():
+    def func():
+        return 42
+
+    return func

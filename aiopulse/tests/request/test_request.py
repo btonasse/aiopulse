@@ -7,14 +7,6 @@ from pydantic import ValidationError
 from aiopulse.request import Method, Request
 
 
-@pytest.fixture
-def dummy_processor():
-    def func():
-        return 42
-
-    return func
-
-
 def test_method_enum():
     assert Method("post") == Method("POST")
     with pytest.raises(ValueError):
@@ -23,16 +15,19 @@ def test_method_enum():
 
 class TestRequest:
     @pytest.mark.parametrize(
-        "payload, expectation",
+        "processor, expectation",
         [
-            ({"response_processor": dummy_processor}, does_not_raise()),
-            ({}, pytest.raises(ValidationError)),
-            ({"response_processor": 42}, pytest.raises(ValidationError)),
+            ("callable", does_not_raise()),
+            (None, pytest.raises(ValidationError)),
+            (42, pytest.raises(ValidationError)),
         ],
-        indirect=["payload"],
     )
-    def test_validate_response_processor(self, payload, expectation):
+    def test_validate_response_processor(self, payload, processor, dummy_processor, expectation):
         with expectation:
+            if processor == "callable":
+                payload["response_processor"] = dummy_processor
+            elif processor:
+                payload["response_processor"] = processor
             assert Request(**payload)._response_processor == dummy_processor
 
     @pytest.mark.parametrize(
