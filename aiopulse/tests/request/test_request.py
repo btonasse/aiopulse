@@ -4,7 +4,7 @@ import pytest
 import yarl
 from pydantic import ValidationError
 
-from reqme.request import Method, Request
+from aiopulse.request import Method, Request
 
 
 @pytest.fixture

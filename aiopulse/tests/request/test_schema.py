@@ -4,10 +4,8 @@ import pytest
 import yarl
 from pydantic import ValidationError
 
-from reqme.request import Method
-from reqme.request.schema import GenericInputSchema
-
-# from reqme.tests.fixtures import payload
+from aiopulse.request import Method
+from aiopulse.request.schema import GenericInputSchema
 
 
 class TestGenericSchema:
