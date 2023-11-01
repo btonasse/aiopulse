@@ -2,6 +2,9 @@ from typing import Any
 
 import pytest
 
+from aiopulse.request.schema import GenericInputSchema
+from aiopulse.request.transformer import GenericTransformer
+
 
 @pytest.fixture
 def payload(request) -> dict[str, Any]:
@@ -30,3 +33,13 @@ def dummy_processor():
         return 42
 
     return func
+
+
+@pytest.fixture
+def dummy_transformer() -> GenericTransformer:
+    return GenericTransformer()
+
+
+@pytest.fixture
+def dummy_input_data(payload) -> GenericInputSchema:
+    return GenericInputSchema(**payload)
