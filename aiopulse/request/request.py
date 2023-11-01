@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 import aiohttp
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
-from pydantic.fields import ModelPrivateAttr
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from yarl import URL
 
 if TYPE_CHECKING:
