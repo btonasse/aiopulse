@@ -12,7 +12,7 @@ class ProcessedResponse(BaseModel):
     content: list[dict[str, Any]] | None
     error: str | None
     request: Request
-    next_request: Request | None = None
+    chain: list[Request] = Field(default_factory=list)
 
 
 ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], ProcessedResponse]
@@ -30,4 +30,4 @@ async def simple_json_processor(response: aiohttp.ClientResponse, request: Reque
         else:
             content = resp_json
 
-    return ProcessedResponse(ok=response.ok, status=response.status, content=content, error=error, request=request, next_request=None)
+    return ProcessedResponse(ok=response.ok, status=response.status, content=content, error=error, request=request)

@@ -41,7 +41,6 @@ class Request(BaseModel):
     headers: dict[str, str] = Field(default_factory=dict)
     form_data: dict[str, Any] = Field(default_factory=dict)
     query_params: dict[str, str] = Field(default_factory=dict)
-    chain: list[Request] | None = None
     _response_processor: ResponseProcessor
 
     def __init__(self, **data):
