@@ -40,6 +40,15 @@ def dummy_processor():
 @pytest.fixture
 def dummy_transformer(payload) -> GenericTransformer:
     transformer = mock.MagicMock(GenericTransformer)
+    payload["extra_info"] = 1234
+    transformer.transform_input.return_value = payload
+    return transformer
+
+
+@pytest.fixture
+def dummy_transformer2(payload) -> GenericTransformer:
+    transformer = mock.MagicMock(GenericTransformer)
+    payload["even_more_extra_info"] = 42
     transformer.transform_input.return_value = payload
     return transformer
 

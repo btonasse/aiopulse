@@ -8,7 +8,7 @@ from .transformer import TransformerBase
 
 class RequestFactoryMapping(TypedDict):
     schema: type[InputSchemaBase]
-    transformer: TransformerBase
+    transformers: list[TransformerBase]
     response_processor: ResponseProcessor
 
 
@@ -28,18 +28,18 @@ class RequestFactory:
     def __init__(self) -> None:
         self.mappings = []
 
-    def register_mapping(self, *, schema: type[InputSchemaBase], transformer: TransformerBase, response_processor: ResponseProcessor) -> None:
+    def register_mapping(self, *, schema: type[InputSchemaBase], transformers: list[TransformerBase], response_processor: ResponseProcessor) -> None:
         """Register a new schema+transformer+response_processor mapping.
 
         Args:
             schema (type[InputSchemaBase]): The pydantic class representing the expected schema of the raw input. Note this expects the class itself, not an instance
-            transformer (TransformerBase): A class that defines a `transform_input()` method, which will take the previously validated raw input and further transform it into data ready to construct a `Request`
+            transformers (list[TransformerBase]): A list of `TransformerBase` instances, which will sequentially take the previously validated raw input and further transform it into data ready to construct a `Request`
             response_processor (ResponseProcessor): A function that takes a `aiohttp.ClientResponse` and returns a `ProcessedResponse`
         """
         self.mappings.append(
             {
                 "schema": schema,
-                "transformer": transformer,
+                "transformers": transformers,
                 "response_processor": response_processor,
             }
         )
@@ -61,6 +61,12 @@ class RequestFactory:
         for mapping in self.mappings:
             if mapping["schema"].is_match(data):
                 input_data = mapping["schema"](**data)
-                transformed_data = mapping["transformer"].transform_input(input_data.model_dump(exclude={"chain"}))
+                transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping["transformers"])
                 return Request(response_processor=mapping["response_processor"], **transformed_data)
         raise ValueError("Data didn't match any registered schemas")
+
+    def apply_transforms(self, data: dict[str, Any], transformers: list[TransformerBase]) -> dict[str, Any]:
+        copied_data = dict(data)
+        for transformer in transformers:
+            copied_data = transformer.transform_input(copied_data)
+        return copied_data
