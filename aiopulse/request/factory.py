@@ -18,7 +18,7 @@ class RequestFactory:
     def __init__(self) -> None:
         self.mappings = []
 
-    def register_mapping(self, schema: type[InputSchemaBase], transformer: TransformerBase, response_processor: ResponseProcessor) -> None:
+    def register_mapping(self, *, schema: type[InputSchemaBase], transformer: TransformerBase, response_processor: ResponseProcessor) -> None:
         self.mappings.append(
             {
                 "schema": schema,

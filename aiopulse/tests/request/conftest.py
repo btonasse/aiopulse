@@ -1,6 +1,8 @@
 from typing import Any
+from unittest import mock
 
 import pytest
+from aiohttp import ClientResponse
 
 from aiopulse.request.schema import GenericInputSchema
 from aiopulse.request.transformer import GenericTransformer
@@ -36,10 +38,19 @@ def dummy_processor():
 
 
 @pytest.fixture
-def dummy_transformer() -> GenericTransformer:
-    return GenericTransformer()
+def dummy_transformer(payload) -> GenericTransformer:
+    transformer = mock.MagicMock(GenericTransformer)
+    transformer.transform_input.return_value = payload
+    return transformer
 
 
 @pytest.fixture
 def dummy_input_data(payload) -> GenericInputSchema:
-    return GenericInputSchema(**payload)
+    schema = mock.Mock(GenericInputSchema)
+    schema.configure_mock(**payload)
+    return schema
+
+
+@pytest.fixture
+def dummy_response() -> ClientResponse:
+    return mock.Mock(ClientResponse)
