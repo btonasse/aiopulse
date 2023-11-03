@@ -12,6 +12,14 @@ if TYPE_CHECKING:
 from enum import StrEnum, auto
 
 
+class Counter:
+    _counter: int = 0
+
+    def __call__(self) -> int:
+        Counter._counter += 1
+        return Counter._counter
+
+
 class Method(StrEnum):
     """
     HTTP methods enum
@@ -34,6 +42,7 @@ class Method(StrEnum):
 class Request(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    id: int = Field(default_factory=Counter())
     description: str
     url: URL
     method: Method
@@ -47,6 +56,16 @@ class Request(BaseModel):
         super().__init__(**data)
         processor: Any = data.get("response_processor")
         self._response_processor = processor
+
+    @model_validator(mode="before")
+    @classmethod
+    def no_id_in_payload(cls, data: Any) -> Any:
+        try:
+            if data.get("id"):
+                raise ValueError("'id' is a reserved keyword and cannot be used in the request construction payload")
+        except AttributeError as err:
+            raise ValueError(str(err))
+        return data
 
     @model_validator(mode="before")
     @classmethod

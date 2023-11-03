@@ -5,6 +5,12 @@ import yarl
 from pydantic import ValidationError
 
 from aiopulse.request import Method, Request
+from aiopulse.request.request import Counter
+
+
+@pytest.fixture(autouse=True)
+def reset_request_counter():
+    Counter._counter = 0
 
 
 def test_method_enum():
@@ -69,3 +75,16 @@ class TestRequest:
     )
     def test_add_query_params(self, payload, expectation, dummy_processor):
         assert str(Request(**payload, response_processor=dummy_processor).url) == expectation
+
+    @pytest.mark.parametrize(
+        "payload, expectation",
+        [
+            ({}, does_not_raise()),
+            ({"id": 123}, pytest.raises(ValidationError)),
+        ],
+        indirect=["payload"],
+    )
+    def test_id(self, payload, expectation, dummy_processor):
+        with expectation:
+            assert Request(**payload, response_processor=dummy_processor).id == 1
+            assert Request(**payload, response_processor=dummy_processor).id == 2
