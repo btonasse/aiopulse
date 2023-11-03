@@ -1,9 +1,11 @@
 from typing import Any
 from unittest import mock
 
+import aiohttp
 import pytest
-from aiohttp import ClientResponse
 
+from aiopulse.request import Request
+from aiopulse.request.factory import RequestFactory
 from aiopulse.request.schema import GenericInputSchema
 from aiopulse.request.transformer import GenericTransformer
 
@@ -61,5 +63,19 @@ def dummy_input_data(payload) -> GenericInputSchema:
 
 
 @pytest.fixture
-def dummy_response() -> ClientResponse:
-    return mock.Mock(ClientResponse)
+def dummy_response() -> aiohttp.ClientResponse:
+    return mock.Mock(aiohttp.ClientResponse)
+
+
+@pytest.fixture
+def dummy_request() -> Request:
+    m = mock.Mock(Request)
+    m.id = 1
+    return m
+
+
+@pytest.fixture
+def dummy_factory(dummy_request) -> RequestFactory:
+    factory = mock.MagicMock(RequestFactory)
+    factory.build_request.return_value = dummy_request
+    return factory
