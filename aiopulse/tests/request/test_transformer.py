@@ -4,7 +4,7 @@ import pytest
 import yarl
 from pydantic import ValidationError
 
-from aiopulse.request.transformer import BaseURLTransformer, GenericTransformer
+from aiopulse import BaseURLTransformer, GenericTransformer
 
 
 @pytest.fixture

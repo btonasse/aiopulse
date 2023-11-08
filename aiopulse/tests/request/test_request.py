@@ -4,8 +4,8 @@ import pytest
 import yarl
 from pydantic import ValidationError
 
-from aiopulse.request import Method, Request
-from aiopulse.request.request import Counter
+from aiopulse import Request
+from aiopulse.core.request import Counter, Method
 
 
 @pytest.fixture(autouse=True)

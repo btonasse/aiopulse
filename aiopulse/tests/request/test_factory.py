@@ -1,12 +1,6 @@
-from contextlib import nullcontext as does_not_raise
-
 import pytest
-import yarl
-from pydantic import ValidationError
 
-from aiopulse.request import Request
-from aiopulse.request.factory import RequestFactory
-from aiopulse.request.schema import GenericInputSchema
+from aiopulse import GenericInputSchema, Request, RequestFactory
 
 
 @pytest.fixture

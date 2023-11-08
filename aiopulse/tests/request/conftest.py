@@ -4,10 +4,7 @@ from unittest import mock
 import aiohttp
 import pytest
 
-from aiopulse.request import Request
-from aiopulse.request.factory import RequestFactory
-from aiopulse.request.schema import GenericInputSchema
-from aiopulse.request.transformer import GenericTransformer
+from aiopulse import GenericInputSchema, GenericTransformer, Request, RequestFactory
 
 
 @pytest.fixture

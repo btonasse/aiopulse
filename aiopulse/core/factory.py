@@ -1,6 +1,6 @@
 from typing import Any, TypedDict
 
-from . import Request
+from .request import Request
 from .response import ResponseProcessor
 from .schema import InputSchemaBase
 from .transformer import TransformerBase

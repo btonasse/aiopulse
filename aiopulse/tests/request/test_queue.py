@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from aiopulse.request.queue import RequestQueue
+from aiopulse import RequestQueue
 
 
 @pytest.fixture

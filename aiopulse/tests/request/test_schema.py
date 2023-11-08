@@ -4,8 +4,8 @@ import pytest
 import yarl
 from pydantic import ValidationError
 
-from aiopulse.request import Method
-from aiopulse.request.schema import GenericInputSchema
+from aiopulse import GenericInputSchema
+from aiopulse.core.request import Method
 
 
 class TestGenericSchema:

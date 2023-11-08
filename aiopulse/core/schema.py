@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from yarl import URL
 
-from . import Method
+from .request import Method
 
 
 class InputSchemaBase(BaseModel, abc.ABC):

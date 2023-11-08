@@ -3,7 +3,7 @@ from typing import Any, Callable
 import aiohttp
 from pydantic import BaseModel, Field
 
-from . import Request
+from .request import Request
 
 
 class ProcessedResponse(BaseModel):
