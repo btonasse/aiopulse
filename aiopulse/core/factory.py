@@ -53,7 +53,8 @@ class RequestFactory:
             data (dict[str, Any]): A dictionary with the raw input data
 
         Raises:
-            ValueError: If the data doesn't match any of the mappings
+            ValueError: If the data doesn't match any of the mappings or the expected values in the transformer method
+            pydantic.ValidationError: If the input data doesn't match the schema or the transformer's
 
         Returns:
             A new `Request` instance
@@ -66,6 +67,15 @@ class RequestFactory:
         raise ValueError("Data didn't match any registered schemas")
 
     def apply_transforms(self, data: dict[str, Any], transformers: list[TransformerBase]) -> dict[str, Any]:
+        """Apply each transformer in the order of insertion.
+
+        Args:
+            data (dict[str, Any]): Data to be transformed
+            transformers (list[TransformerBase]): List of transformers to be applied
+
+        Returns:
+            dict[str, Any]: A new dictionary with the transformed data
+        """
         copied_data = dict(data)
         for transformer in transformers:
             copied_data = transformer.transform_input(copied_data)
