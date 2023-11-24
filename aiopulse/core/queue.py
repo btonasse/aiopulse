@@ -3,7 +3,6 @@ from typing import Any
 
 from .factory import RequestFactory
 from .request import Request
-from .response import ProcessedResponse
 
 
 class RequestQueue:
