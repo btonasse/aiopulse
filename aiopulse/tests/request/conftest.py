@@ -68,6 +68,9 @@ def dummy_response() -> aiohttp.ClientResponse:
 def dummy_request() -> Request:
     m = mock.Mock(Request)
     m.id = 1
+    m.body = dict()
+    m.url = mock.Mock()
+    m.query_params = mock.Mock()
     return m
 
 

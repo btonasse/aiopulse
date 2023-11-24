@@ -7,12 +7,11 @@ from .request import Request
 
 
 class ProcessedResponse(BaseModel):
-    ok: bool
     status: int = Field(ge=100, lt=600)
-    content: list[dict[str, Any]] | None
+    content: list[dict[str, Any]] = Field(default_factory=list)
     error: str | None
     request: Request
-    chain: list[Request] = Field(default_factory=list)
+    chain: list[dict[str, Any]] = Field(default_factory=list)
 
 
 ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], ProcessedResponse]
@@ -20,7 +19,7 @@ ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], ProcessedRespons
 
 async def simple_json_processor(response: aiohttp.ClientResponse, request: Request) -> ProcessedResponse:
     if response.status >= 400:
-        content = None
+        content = []
         error = response.reason
     else:
         resp_json: dict[str, Any] | list[dict[str, Any]] = await response.json()
@@ -30,4 +29,4 @@ async def simple_json_processor(response: aiohttp.ClientResponse, request: Reque
         else:
             content = resp_json
 
-    return ProcessedResponse(ok=response.ok, status=response.status, content=content, error=error, request=request)
+    return ProcessedResponse(status=response.status, content=content, error=error, request=request)
