@@ -1,7 +1,7 @@
 import pytest
 from aiohttp import ClientResponse
 
-from aiopulse.core.response import simple_json_processor
+from aiopulse.response import simple_json_processor
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def parametrized_response(request, dummy_response) -> ClientResponse:
     ],
     indirect=["parametrized_response"],
 )
-async def test_simple_json_processor(dummy_request, parametrized_response, error, payload):
+async def test_simple_json_processor(dummy_request, parametrized_response, error):
     processed = await simple_json_processor(parametrized_response, dummy_request)
     assert processed.error == error
     assert isinstance(processed.content, list)

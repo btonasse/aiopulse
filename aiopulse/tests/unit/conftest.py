@@ -4,7 +4,7 @@ from unittest import mock
 import aiohttp
 import pytest
 
-from aiopulse import GenericInputSchema, GenericTransformer, Request, RequestFactory
+from aiopulse import GenericInputSchema, GenericTransformer, Request, RequestFactory, Session
 
 
 @pytest.fixture
@@ -71,6 +71,9 @@ def dummy_request() -> Request:
     m.body = dict()
     m.url = mock.Mock()
     m.query_params = mock.Mock()
+    m.method = mock.Mock()
+    m.headers = dict()
+    m.form_data = dict()
     return m
 
 
@@ -79,3 +82,9 @@ def dummy_factory(dummy_request) -> RequestFactory:
     factory = mock.MagicMock(RequestFactory)
     factory.build_request.return_value = dummy_request
     return factory
+
+
+@pytest.fixture
+def dummy_session() -> Session:
+    s = mock.Mock(Session)
+    return s

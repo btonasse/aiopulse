@@ -5,7 +5,7 @@ import yarl
 from pydantic import ValidationError
 
 from aiopulse import GenericInputSchema
-from aiopulse.core.request import Method
+from aiopulse.request import Method
 
 
 class TestGenericSchema:
