@@ -17,9 +17,7 @@ def payload(request) -> dict[str, Any]:
         "body": {"heyjude": "dontmakemecry", "lalala": 123},
         "query_params": {"someparam": "1", "otherparam": "2"},
     }
-    params = getattr(request, "param", None)
-    if not params:
-        return data
+    params = getattr(request, "param", dict())
     for k, v in params.items():
         if k == "remove_key" and v in data.keys():
             del data[v]
@@ -65,15 +63,16 @@ def dummy_response() -> aiohttp.ClientResponse:
 
 
 @pytest.fixture
-def dummy_request() -> Request:
+def dummy_request(request) -> Request:
     m = mock.Mock(Request)
     m.id = 1
-    m.body = dict()
+    params = getattr(request, "param", dict())
+    m.body = params.get("body") or dict()
     m.url = mock.Mock()
     m.query_params = mock.Mock()
     m.method = mock.Mock()
     m.headers = dict()
-    m.form_data = dict()
+    m.form_data = params.get("form_data") or dict()
     return m
 
 
