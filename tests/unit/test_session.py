@@ -15,5 +15,5 @@ class TestSession:
     def test_prepare_request(self, dummy_request: Request, payload_type):
         session = Session()
         req = session._prepare_request(dummy_request)
-        assert req.get(payload_type) is not None
+        assert not (req.get("json") is not None and req.get("data") is not None)
         assert req.get(payload_type) == {"some": "thing"}
