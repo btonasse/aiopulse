@@ -31,7 +31,9 @@ class TestQueue:
         with pytest.raises(asyncio.QueueEmpty):
             queue.get()
 
-    async def test_build_queue(self, queue: RequestQueue, nested_payloads, dummy_factory):
+    async def test_build_queue(self, queue: RequestQueue, nested_payloads, dummy_factory, payload):
+        with pytest.raises(TypeError):
+            await queue.build_queue(dummy_factory, payload)
         await queue.build_queue(dummy_factory, nested_payloads)
         assert queue._queue.qsize() == 2
         assert len(queue._deferred_requests) == 1

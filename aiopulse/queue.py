@@ -34,6 +34,9 @@ class RequestQueue:
             dependency (int | None, optional): When recursing, the `id` of the parent `Request` is passed as this argument so we can keep track of which parent a child `Request` depends on. Defaults to None.
         """
         self.logger.info(f"Building request queue. Dependency: {dependency}")
+        if not isinstance(data, list):
+            err = "Failed building queue: input data has to be a list/array"
+            raise TypeError(err)
         for payload in data:
             request = factory.build_request(payload)
 
