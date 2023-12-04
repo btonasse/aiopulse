@@ -21,7 +21,7 @@ class Session:
     async def process_queue(self, queue: RequestQueue, batch_size: int, factory: RequestFactory) -> list[ProcessedResponse]:
         self.logger.info(f"Triggering queue processing. Batch size = {batch_size}")
         all_responses: list[ProcessedResponse] = []
-        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+        async with aiohttp.ClientSession() as session:
             while True:
                 batch: list[Request] = []
                 for _ in range(batch_size):
@@ -32,11 +32,11 @@ class Session:
 
                 if not batch:
                     break
-
-                tasks = [asyncio.create_task(self.send(session, request) for request in batch)]
+                tasks = [asyncio.create_task(self.send(session, request)) for request in batch]
                 processed_responses: list[ProcessedResponse] = await asyncio.gather(*tasks)
                 self.logger.info("Finished request batch. Processing responses...")
                 for response in processed_responses:
+                    all_responses.append(response)
                     # Add deferred requests that depend on this response if any
                     await queue.add_deferred(response.request.id)
                     # Add new requests created by the response processor
@@ -66,5 +66,5 @@ class Session:
 
     async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse:
         params = self._prepare_request(request)
-        async with session.request(**params) as resp:
+        async with session.request(timeout=self.timeout, **params) as resp:
             return await request.process_response(resp)

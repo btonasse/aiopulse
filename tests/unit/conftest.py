@@ -1,10 +1,11 @@
+from copy import deepcopy
 from typing import Any
 from unittest import mock
 
 import aiohttp
 import pytest
 
-from aiopulse import GenericInputSchema, GenericTransformer, Request, RequestFactory, Session
+from aiopulse import GenericInputSchema, GenericTransformer, ProcessedResponse, Request, RequestFactory, RequestQueue, Session
 
 
 @pytest.fixture
@@ -62,24 +63,27 @@ def dummy_response() -> aiohttp.ClientResponse:
     return mock.Mock(aiohttp.ClientResponse)
 
 
-@pytest.fixture
-def dummy_request(request) -> Request:
-    m = mock.Mock(Request)
-    m.id = 1
-    params = getattr(request, "param", dict())
-    m.body = params.get("body") or dict()
-    m.url = mock.Mock()
-    m.query_params = mock.Mock()
-    m.method = mock.Mock()
-    m.headers = dict()
-    m.form_data = params.get("form_data") or dict()
-    return m
+@pytest.fixture(scope="function")
+def dummy_request(request):
+    def _make(id: int = 1):
+        m = mock.Mock(Request)
+        m.id = id
+        params = getattr(request, "param", dict())
+        m.body = params.get("body") or dict()
+        m.url = mock.Mock()
+        m.query_params = mock.Mock()
+        m.method = mock.Mock()
+        m.headers = dict()
+        m.form_data = params.get("form_data") or dict()
+        return m
+
+    return _make
 
 
 @pytest.fixture
 def dummy_factory(dummy_request) -> RequestFactory:
     factory = mock.MagicMock(RequestFactory)
-    factory.build_request.return_value = dummy_request
+    factory.build_request.return_value = dummy_request()
     return factory
 
 
@@ -87,3 +91,31 @@ def dummy_factory(dummy_request) -> RequestFactory:
 def dummy_session() -> Session:
     s = mock.Mock(Session)
     return s
+
+
+@pytest.fixture
+async def dummy_queue(request, dummy_request) -> RequestQueue:
+    params = getattr(request, "param", dict())
+    q = RequestQueue()
+    r1 = dummy_request()
+    r1.body["delay"] = params.get("delay", 0.01)[0]
+    await q._queue.put(r1)
+    r2 = dummy_request(2)
+    r2.body["delay"] = params.get("delay", 0.01)[1]
+    await q._queue.put(r2)
+    r3 = dummy_request(3)
+    r3.body["delay"] = params.get("delay", 0.01)[2]
+    q._deferred_requests[1] = [r3]
+    return q
+
+
+@pytest.fixture
+def dummy_processed_response(request):
+    def _make():
+        m = mock.Mock(ProcessedResponse)
+        params = getattr(request, "param", dict())
+        m.chain = list()
+        # todo
+        return m
+
+    return _make
