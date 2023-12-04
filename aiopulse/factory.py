@@ -1,4 +1,7 @@
+import logging
 from typing import Any, TypedDict
+
+from pydantic import ValidationError
 
 from .request import Request
 from .response import ResponseProcessor
@@ -26,7 +29,9 @@ class RequestFactory:
     mappings: list[RequestFactoryMapping]
 
     def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
         self.mappings = []
+        self.logger.debug("RequestFactory initialized.")
 
     def register_mapping(self, *, schema: type[InputSchemaBase], transformers: list[TransformerBase], response_processor: ResponseProcessor) -> None:
         """Register a new schema+transformer+response_processor mapping.
@@ -36,6 +41,7 @@ class RequestFactory:
             transformers (list[TransformerBase]): A list of `TransformerBase` instances, which will sequentially take the previously validated raw input and further transform it into data ready to construct a `Request`
             response_processor (ResponseProcessor): A function that takes a `aiohttp.ClientResponse` and returns a `ProcessedResponse`
         """
+        self.logger.info(f"New request mapping: schema {schema.__class__.__name__} | transformers: {[t.__class__.__name__ for t in transformers]} | processor: {response_processor.__name__}")
         self.mappings.append(
             {
                 "schema": schema,
@@ -59,11 +65,19 @@ class RequestFactory:
         Returns:
             A new `Request` instance
         """
-        for mapping in self.mappings:
-            if mapping["schema"].is_match(data):
-                input_data = mapping["schema"](**data)
-                transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping["transformers"])
-                return Request(response_processor=mapping["response_processor"], **transformed_data)
+        self.logger.info("Building request...")
+        try:
+            for mapping in self.mappings:
+                schema = mapping["schema"]
+                if schema.is_match(data):
+                    self.logger.info(f"Schema <{schema.__class__.__name__}> matched request data")
+                    input_data = schema(**data)
+                    transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping["transformers"])
+                    return Request(response_processor=mapping["response_processor"], **transformed_data)
+        except (ValidationError, ValueError) as err:
+            self.logger.error(f"Failed building request. Error: {str(err)}")
+            raise
+        self.logger.warning("Data didn't match any registered schemas")
         raise ValueError("Data didn't match any registered schemas")
 
     def apply_transforms(self, data: dict[str, Any], transformers: list[TransformerBase]) -> dict[str, Any]:
@@ -76,7 +90,9 @@ class RequestFactory:
         Returns:
             dict[str, Any]: A new dictionary with the transformed data
         """
+        self.logger.info(f"Applying {len(transformers)} to input data...")
         copied_data = dict(data)
         for transformer in transformers:
+            self.logger.info(f"Applying {transformer.__class__.__name__}...")
             copied_data = transformer.transform_input(copied_data)
         return copied_data

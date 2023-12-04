@@ -16,7 +16,7 @@ class Session:
 
     def __init__(self, timeout: int = 60) -> None:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
-        self.logger.debug(f"<Session> object created with timeout {timeout}s")
+        self.logger.info(f"<Session> object created with timeout {timeout}s")
 
     async def process_queue(self, queue: RequestQueue, batch_size: int, factory: RequestFactory) -> list[ProcessedResponse]:
         self.logger.info(f"Triggering queue processing. Batch size = {batch_size}")
@@ -31,6 +31,7 @@ class Session:
                         break
 
                 if not batch:
+                    self.logger.info("No more requests to send.")
                     break
                 tasks = [asyncio.create_task(self.send(session, request)) for request in batch]
                 processed_responses: list[ProcessedResponse] = await asyncio.gather(*tasks)
@@ -66,5 +67,6 @@ class Session:
 
     async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse:
         params = self._prepare_request(request)
+        self.logger.info(f"Sending {request.method} request with id {request.id} to {request.url}...")
         async with session.request(**params) as resp:
             return await request.process_response(resp)
