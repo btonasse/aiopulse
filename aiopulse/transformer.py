@@ -4,6 +4,8 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, field_validator
 from yarl import URL
 
+from aiopulse.request import Method
+
 
 class TransformerBase(BaseModel, abc.ABC):
     @abc.abstractmethod
@@ -45,4 +47,13 @@ class BaseURLTransformer(TransformerBase):
         joined_url = self.base_url.joinpath(str(url), encoded=True)  # type: ignore - necessary because for some reason the linter thinks the "encoded" parameter is not part of this method's signature.
         copied_data = dict(input_data)
         copied_data["url"] = joined_url
+        return copied_data
+
+
+class AddMethod(TransformerBase):
+    method: Method
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        copied_data = dict(input_data)
+        copied_data["method"] = self.method
         return copied_data
