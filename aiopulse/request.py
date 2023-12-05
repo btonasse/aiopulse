@@ -100,4 +100,4 @@ class Request(BaseModel):
         return self
 
     async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:
-        return self._response_processor(response, self)
+        return await self._response_processor(response, self)
