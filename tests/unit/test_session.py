@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import aiohttp
 import pytest
 
-from aiopulse import RequestQueue, Session
+from aiopulse import Client, RequestQueue
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ async def mock_request_method(request):
     return mock_method
 
 
-class TestSession:
+class TestClient:
     @pytest.mark.parametrize(
         "dummy_request, payload_type",
         [
@@ -47,7 +47,7 @@ class TestSession:
         indirect=["dummy_request"],
     )
     def test_prepare_request(self, dummy_request, payload_type):
-        session = Session()
+        session = Client()
         req = session._prepare_request(dummy_request())
         assert not (req.get("json") is not None and req.get("data") is not None)
         assert req.get(payload_type) == {"some": "thing"}
@@ -61,8 +61,8 @@ class TestSession:
         indirect=["dummy_queue"],
     )
     async def test_process_queue(self, dummy_queue: RequestQueue, dummy_factory, mock_send, loop, monkeypatch, expected_order, completion_order):
-        session = Session(1)
-        monkeypatch.setattr(Session, "send", mock_send)
+        session = Client(1)
+        monkeypatch.setattr(Client, "send", mock_send)
         resps = await session.process_queue(dummy_queue, 10, dummy_factory)
         assert len(resps) == 3
         assert completion_order == expected_order
@@ -76,7 +76,7 @@ class TestSession:
         indirect=["mock_request_method"],
     )
     async def test_test(self, mock_request_method, monkeypatch, dummy_request, error, loop):
-        session = Session()
+        session = Client()
         monkeypatch.setattr(aiohttp.ClientSession, "request", mock_request_method)
         async with aiohttp.ClientSession() as asyncsession:
             resp = await session.send(asyncsession, dummy_request())

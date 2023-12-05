@@ -5,7 +5,7 @@ from unittest import mock
 import aiohttp
 import pytest
 
-from aiopulse import GenericInputSchema, GenericTransformer, ProcessedResponse, Request, RequestFactory, RequestQueue, Session
+from aiopulse import Client, GenericInputSchema, GenericTransformer, ProcessedResponse, Request, RequestFactory, RequestQueue
 
 
 @pytest.fixture
@@ -89,8 +89,8 @@ def dummy_factory(dummy_request) -> RequestFactory:
 
 
 @pytest.fixture
-def dummy_session() -> Session:
-    s = mock.Mock(Session)
+def dummy_client() -> Client:
+    s = mock.Mock(Client)
     return s
 
 
