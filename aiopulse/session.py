@@ -68,5 +68,11 @@ class Session:
     async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse:
         params = self._prepare_request(request)
         self.logger.info(f"Sending {request.method} request with id {request.id} to {request.url}...")
-        async with session.request(**params) as resp:
-            return await request.process_response(resp)
+        try:
+            async with session.request(**params) as resp:
+                self.logger.info("Request id %s successful. Processing response...", request.id)
+                return await request.process_response(resp)
+        except Exception as err:
+            msg = f"{type(err).__name__}: {str(err)}"
+            self.logger.error("Request id %s failed - %s", request.id, msg)
+            return ProcessedResponse(status=400, error=msg, request=request)

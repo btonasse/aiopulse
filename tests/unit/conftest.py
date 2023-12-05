@@ -64,7 +64,7 @@ def dummy_response() -> aiohttp.ClientResponse:
 
 
 @pytest.fixture(scope="function")
-def dummy_request(request):
+def dummy_request(request, dummy_processed_response):
     def _make(id: int = 1):
         m = mock.Mock(Request)
         m.id = id
@@ -75,6 +75,7 @@ def dummy_request(request):
         m.method = mock.Mock()
         m.headers = dict()
         m.form_data = params.get("form_data") or dict()
+        m.process_response.return_value = dummy_processed_response()
         return m
 
     return _make
@@ -98,13 +99,13 @@ async def dummy_queue(request, dummy_request) -> RequestQueue:
     params = getattr(request, "param", dict())
     q = RequestQueue()
     r1 = dummy_request()
-    r1.body["delay"] = params.get("delay", 0.01)[0]
+    r1.body["delay"] = params.get("delay", (0.01, 0.01, 0.01))[0]
     await q._queue.put(r1)
     r2 = dummy_request(2)
-    r2.body["delay"] = params.get("delay", 0.01)[1]
+    r2.body["delay"] = params.get("delay", (0.01, 0.01, 0.01))[1]
     await q._queue.put(r2)
     r3 = dummy_request(3)
-    r3.body["delay"] = params.get("delay", 0.01)[2]
+    r3.body["delay"] = params.get("delay", (0.01, 0.01, 0.01))[2]
     q._deferred_requests[1] = [r3]
     return q
 
@@ -115,7 +116,7 @@ def dummy_processed_response(request):
         m = mock.Mock(ProcessedResponse)
         params = getattr(request, "param", dict())
         m.chain = list()
-        # todo
+        m.error = None
         return m
 
     return _make
