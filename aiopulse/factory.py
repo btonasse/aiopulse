@@ -41,7 +41,7 @@ class RequestFactory:
             transformers (list[TransformerBase]): A list of `TransformerBase` instances, which will sequentially take the previously validated raw input and further transform it into data ready to construct a `Request`
             response_processor (ResponseProcessor): A function that takes a `aiohttp.ClientResponse` and returns a `ProcessedResponse`
         """
-        self.logger.info(f"New request mapping: schema {schema.__name__} | transformers: {[t.__class__.__name__ for t in transformers]} | processor: {response_processor.__name__}")
+        self.logger.info(f"New request mapping: schema '{schema.__name__}' | transformers: {[t.__class__.__name__ for t in transformers]} | processor: '{response_processor.__name__}'")
         self.mappings.append(
             {
                 "schema": schema,
@@ -70,7 +70,7 @@ class RequestFactory:
             for mapping in self.mappings:
                 schema = mapping["schema"]
                 if schema.is_match(data):
-                    self.logger.info(f"Schema <{schema.__name__}> matched request data")
+                    self.logger.info(f"Schema '{schema.__name__}' matched request data")
                     input_data = schema(**data)
                     transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping["transformers"])
                     return Request(response_processor=mapping["response_processor"], **transformed_data)
@@ -93,6 +93,6 @@ class RequestFactory:
         self.logger.info(f"Applying {len(transformers)} transformers to input data...")
         copied_data = dict(data)
         for transformer in transformers:
-            self.logger.info(f"Applying {transformer.__class__.__name__}...")
+            self.logger.info(f"Applying '{transformer.__class__.__name__}'...")
             copied_data = transformer.transform_input(copied_data)
         return copied_data
