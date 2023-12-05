@@ -16,7 +16,7 @@ class Client:
 
     def __init__(self, timeout: int = 60) -> None:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
-        self.logger.info(f"<Client> object created with timeout {timeout}s")
+        self.logger.debug(f"Client initialized with timeout {timeout}s")
 
     async def process_queue(self, queue: RequestQueue, batch_size: int, factory: RequestFactory) -> list[ProcessedResponse]:
         self.logger.info(f"Triggering queue processing. Batch size = {batch_size}")
