@@ -69,10 +69,10 @@ class Client:
         params = self._prepare_request(request)
         self.logger.info(f"Sending {request.method} request with id {request.id} to {request.url}...")
         try:
-            async with session.request(**params) as resp:
-                self.logger.info("Request id %s successful. Processing response...", request.id)
-                return await request.process_response(resp)
-        except Exception as err:
+            resp = await session.request(**params)
+            self.logger.info("Request id %s successful. Processing response...", request.id)
+            return await request.process_response(resp)
+        except aiohttp.ClientError as err:
             msg = f"{type(err).__name__}: {str(err)}"
-            self.logger.error("Request id %s failed - %s", request.id, msg)
-            return ProcessedResponse(status=400, error=msg, request=request)
+            self.logger.error("Request id %s failed with error '%s' - returning a processed response with status 999", request.id, msg)
+            return ProcessedResponse(status=999, content=[], error=msg, request=request)
