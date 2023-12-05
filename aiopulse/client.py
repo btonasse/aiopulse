@@ -38,6 +38,10 @@ class Client:
                 self.logger.info("Finished request batch. Processing responses...")
                 for response in processed_responses:
                     all_responses.append(response)
+                    # Do not process dependent requests if there has been an error
+                    if response.error and not response.content:
+                        self.logger.warning("Request with id %s failed. Any dependent requests will be skipped.", response.request.id)
+                        continue
                     # Add deferred requests that depend on this response if any
                     await queue.add_deferred(response.request.id)
                     # Add new requests created by the response processor
@@ -74,5 +78,5 @@ class Client:
             return await request.process_response(resp)
         except aiohttp.ClientError as err:
             msg = f"{type(err).__name__}: {str(err)}"
-            self.logger.error("Request id %s failed with error '%s' - returning a processed response with status 999", request.id, msg)
-            return ProcessedResponse(status=999, content=[], error=msg, request=request)
+            self.logger.error("Request id %s failed with error '%s' - returning a processed response with status 599", request.id, msg)
+            return ProcessedResponse(status=599, content=[], error=msg, request=request)
