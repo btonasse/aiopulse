@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 import pytest
 
-from aiopulse import Client, RequestQueue
+from aiopulse import Client, ProcessedResponse, RequestQueue
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ async def mock_send(dummy_processed_response, completion_order):
         delay = request.body.get("delay", 0.01)
         resp = dummy_processed_response()
         resp.content = [{"delay": delay}]
-        resp.request = request
+        resp.ok = True
         await asyncio.sleep(delay)
         completion_order.append(request.id)
         return resp
@@ -64,21 +64,21 @@ class TestClient:
         client = Client(1)
         monkeypatch.setattr(Client, "send", mock_send)
         async with aiohttp.ClientSession() as session:
-            resps = await client.process_queue(session, dummy_queue, 10, dummy_factory)
-        assert len(resps) == 3
+            results = await client.process_queue(session, dummy_queue, 10, dummy_factory)
+        assert len(results) == 3
         assert completion_order == expected_order
 
     @pytest.mark.parametrize(
-        "mock_request_method, error",
+        "mock_request_method, expected_type",
         [
-            ({"error": True}, "ClientError: Some random exception"),
-            ({"error": False}, None),
+            ({"error": True}, type(None)),
+            ({"error": False}, ProcessedResponse),
         ],
         indirect=["mock_request_method"],
     )
-    async def test_send(self, mock_request_method, monkeypatch, dummy_request, error, loop):
+    async def test_send(self, mock_request_method, monkeypatch, dummy_request, expected_type, loop):
         client = Client()
         monkeypatch.setattr(aiohttp.ClientSession, "request", mock_request_method)
         async with aiohttp.ClientSession() as session:
             resp = await client.send(session, dummy_request())
-        assert resp.error == error
+        assert isinstance(resp, expected_type)

@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from enum import StrEnum, auto
+from typing import Any, Callable
 
 import aiohttp
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from yarl import URL
 
-if TYPE_CHECKING:
-    from .response import ProcessedResponse, ResponseProcessor
-
-from enum import StrEnum, auto
+from .response import ProcessedResponse, ResponseProcessor
 
 
 class Counter:
@@ -50,12 +48,7 @@ class Request(BaseModel):
     headers: dict[str, str] = Field(default_factory=dict)
     form_data: dict[str, Any] = Field(default_factory=dict)
     query_params: dict[str, str] = Field(default_factory=dict)
-    _response_processor: ResponseProcessor
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        processor: Any = data.get("response_processor")
-        self._response_processor = processor
+    response_processor: ResponseProcessor = Field(exclude=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -100,4 +93,5 @@ class Request(BaseModel):
         return self
 
     async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:
-        return await self._response_processor(response, self)
+        resp = await self.response_processor(response)
+        return resp

@@ -3,12 +3,17 @@ import logging
 from typing import Any
 
 import aiohttp
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from .factory import RequestFactory
 from .queue import RequestQueue
 from .request import Request
 from .response import ProcessedResponse
+
+
+class ProcessingResult(BaseModel):
+    request: Request
+    response: ProcessedResponse | None
 
 
 class Client:
@@ -18,9 +23,9 @@ class Client:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger.debug(f"Client initialized with timeout {timeout}s")
 
-    async def process_queue(self, session: aiohttp.ClientSession, queue: RequestQueue, batch_size: int, factory: RequestFactory) -> list[ProcessedResponse]:
+    async def process_queue(self, session: aiohttp.ClientSession, queue: RequestQueue, batch_size: int, factory: RequestFactory) -> list[ProcessingResult]:
         self.logger.info(f"Triggering queue processing. Batch size = {batch_size}")
-        all_responses: list[ProcessedResponse] = []
+        results: list[ProcessingResult] = []
         while True:
             batch: list[Request] = []
             for _ in range(batch_size):
@@ -33,28 +38,29 @@ class Client:
                 self.logger.info("No more requests to send.")
                 break
             tasks = [asyncio.create_task(self.send(session, request)) for request in batch]
-            processed_responses: list[ProcessedResponse] = await asyncio.gather(*tasks)
+            processed_responses: list[ProcessedResponse | None] = await asyncio.gather(*tasks)
             self.logger.info("Finished request batch. Processing responses...")
-            for response in processed_responses:
-                all_responses.append(response)
+            for i, response in enumerate(processed_responses):
+                request = batch[i]
+                results.append(ProcessingResult(request=request, response=response))
                 # Do not process dependent requests if there has been an error
-                if response.error and not response.content:
-                    self.logger.warning("Request with id %s failed. Any dependent requests will be skipped.", response.request.id)
+                if not response or not response.ok:
+                    self.logger.warning("Request with id %s failed. Any dependent requests will be skipped.", request.id)
                     continue
                 # Add deferred requests that depend on this response if any
-                await queue.add_deferred(response.request.id)
+                await queue.add_deferred(request.id)
                 # Add new requests created by the response processor
                 if response.chain:
-                    await self._add_chained_requests(queue, factory, response)
-        return all_responses
+                    await self._add_chained_requests(queue, factory, request.id, response.chain)
+        return results
 
-    async def _add_chained_requests(self, queue: RequestQueue, factory: RequestFactory, response: ProcessedResponse) -> None:
-        self.logger.info(f"Adding chained requests created by request id {response.request.id}")
+    async def _add_chained_requests(self, queue: RequestQueue, factory: RequestFactory, dependency: int, data: list[dict[str, Any]]) -> None:
+        self.logger.info("Adding chained requests created by request id %s", dependency)
         try:
-            await queue.build_queue(factory, response.chain)
-            self.logger.info(f"Chained requests created by request id {response.request.id} added to queue")
+            await queue.build_queue(factory, data)
+            self.logger.info("Chained requests created by request id %s added to queue", dependency)
         except (ValidationError, ValueError) as err:
-            self.logger.error(f"Could not build chained requests for request of id {response.request.id}. Skipping rest of chain. Error: {str(err)}")
+            self.logger.error("Could not build chained requests for request of id %s. Skipping rest of chain. Error: %s", dependency, str(err))
 
     def _prepare_request(self, request: Request) -> dict[str, Any]:
         params = {
@@ -68,7 +74,7 @@ class Client:
             params["data"] = request.form_data
         return params
 
-    async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse:
+    async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse | None:
         params = self._prepare_request(request)
         self.logger.info(f"Sending {request.method} request with id {request.id} to {request.url}...")
         try:
@@ -77,5 +83,4 @@ class Client:
             return await request.process_response(resp)
         except aiohttp.ClientError as err:
             msg = f"{type(err).__name__}: {str(err)}"
-            self.logger.error("Request id %s failed with error '%s' - returning a processed response with status 599", request.id, msg)
-            return ProcessedResponse(status=599, content=[], error=msg, request=request)
+            self.logger.error("Request id %s failed with error '%s'", request.id, msg)

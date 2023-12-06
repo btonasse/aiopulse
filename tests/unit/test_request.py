@@ -34,7 +34,7 @@ class TestRequest:
                 payload["response_processor"] = dummy_processor
             elif processor:
                 payload["response_processor"] = processor
-            assert Request(**payload)._response_processor == dummy_processor
+            assert Request(**payload).response_processor == dummy_processor
 
     @pytest.mark.parametrize(
         "payload, expectation",

@@ -28,7 +28,7 @@ def parametrized_response(request, dummy_response) -> ClientResponse:
     ],
     indirect=["parametrized_response"],
 )
-async def test_simple_json_processor(dummy_request, parametrized_response, error):
-    processed = await simple_json_processor(parametrized_response, dummy_request())
+async def test_simple_json_processor(parametrized_response, error):
+    processed = await simple_json_processor(parametrized_response)
     assert processed.error == error
     assert isinstance(processed.content, list)
