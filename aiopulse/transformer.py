@@ -64,3 +64,24 @@ class AddHeaders(TransformerBase):
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
         return input_data["headers"] | self.headers
+
+
+class AddQueryParams(TransformerBase):
+    params: dict[str, str]
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        return input_data["query_params"] | self.params
+
+
+class AddFormData(TransformerBase):
+    form_data: dict[str, Any]
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        return input_data["form_data"] | self.form_data
+
+
+class AddToBody(TransformerBase):
+    body: dict[str, Any]
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        return input_data["body"] | self.body
