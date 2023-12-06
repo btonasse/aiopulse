@@ -63,6 +63,4 @@ class AddHeaders(TransformerBase):
     headers: dict[str, str]
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        copied_data = dict(input_data)
-        copied_data["headers"] = self.headers
-        return copied_data
+        return input_data["headers"] | self.headers
