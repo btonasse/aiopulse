@@ -57,3 +57,12 @@ class AddMethod(TransformerBase):
         copied_data = dict(input_data)
         copied_data["method"] = self.method
         return copied_data
+
+
+class AddHeaders(TransformerBase):
+    headers: dict[str, str]
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        copied_data = dict(input_data)
+        copied_data["headers"] = self.headers
+        return copied_data
