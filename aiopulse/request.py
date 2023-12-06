@@ -89,7 +89,7 @@ class Request(BaseModel):
 
     @model_validator(mode="after")
     def add_query_params(self) -> Request:
-        self.url = self.url.with_query(self.query_params)
+        self.url = self.url.update_query(self.query_params)
         return self
 
     async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:
