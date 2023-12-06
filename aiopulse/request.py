@@ -65,7 +65,7 @@ class Request(BaseModel):
     def validate_response_processor(cls, data: Any) -> Any:
         try:
             processor = data.get("response_processor")
-            assert processor is not None and isinstance(processor, Callable)
+            assert processor is not None and isinstance(processor, Callable), "No response processor"
         except AttributeError as err:
             raise ValueError(str(err))
         return data
