@@ -65,3 +65,8 @@ class RequestQueue:
             self.logger.info(f"Found {len(deferred)} dependent requests.")
             for request in deferred:
                 await self.add(request)
+
+    def total_request_count(self) -> int:
+        in_queue = self._queue.qsize()
+        deferred = sum(len(reqs) for reqs in self._deferred_requests.values())
+        return in_queue + deferred

@@ -38,3 +38,10 @@ class TestQueue:
         assert queue._queue.qsize() == 2
         assert len(queue._deferred_requests) == 1
         assert queue._deferred_requests.get(1)
+
+    async def test_total_count(self, queue: RequestQueue, dummy_request):
+        await queue.add(dummy_request())
+        await queue.add(dummy_request())
+        queue._deferred_requests[1] = [dummy_request(), dummy_request(), dummy_request()]
+        queue._deferred_requests[2] = [dummy_request()]
+        assert queue.total_request_count() == 6
