@@ -47,7 +47,7 @@ class Request(BaseModel):
     body: dict[str, Any] = Field(default_factory=dict)
     headers: dict[str, str] = Field(default_factory=dict)
     form_data: dict[str, Any] = Field(default_factory=dict)
-    query_params: dict[str, str] = Field(default_factory=dict)
+    query_params: dict[str, str] = Field(default_factory=dict, exclude=True)
     response_processor: ResponseProcessor = Field(exclude=True)
 
     @model_validator(mode="before")
