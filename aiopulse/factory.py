@@ -1,12 +1,15 @@
 import logging
-from typing import Any, TypedDict
+from typing import Any, Callable, Coroutine, TypedDict
 
+import aiohttp
 from pydantic import ValidationError
 
 from .request import Request
-from .response import ResponseProcessor
+from .response import ProcessedResponse
 from .schema import InputSchemaBase
 from .transformer import TransformerBase
+
+ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], Coroutine[Any, Any, ProcessedResponse]]
 
 
 class RequestFactoryMapping(TypedDict):

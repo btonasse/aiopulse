@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from enum import StrEnum, auto
-from typing import Any, Callable
+from typing import Any, Callable, Coroutine
 
 import aiohttp
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from yarl import URL
 
-from .response import ProcessedResponse, ResponseProcessor
+from .response import ProcessedResponse
 
 
 class Counter:
@@ -48,7 +48,7 @@ class Request(BaseModel):
     headers: dict[str, str] = Field(default_factory=dict)
     form_data: dict[str, Any] = Field(default_factory=dict)
     query_params: dict[str, str] = Field(default_factory=dict, exclude=True)
-    response_processor: ResponseProcessor = Field(exclude=True)
+    response_processor: Callable[[aiohttp.ClientResponse, Request], Coroutine[Any, Any, ProcessedResponse]] = Field(exclude=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -93,5 +93,5 @@ class Request(BaseModel):
         return self
 
     async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:
-        resp = await self.response_processor(response)
+        resp = await self.response_processor(response, self)
         return resp

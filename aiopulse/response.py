@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 import aiohttp
 from pydantic import BaseModel, Field
@@ -12,10 +12,7 @@ class ProcessedResponse(BaseModel):
     chain: list[dict[str, Any]] = Field(default_factory=list)
 
 
-ResponseProcessor = Callable[[aiohttp.ClientResponse], Coroutine[Any, Any, ProcessedResponse]]
-
-
-async def simple_json_processor(response: aiohttp.ClientResponse) -> ProcessedResponse:
+async def simple_json_processor(response: aiohttp.ClientResponse, request) -> ProcessedResponse:
     if response.status >= 400:
         ok = False
         content = []
