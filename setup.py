@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="aiopulse",
-    version="0.2.1",
+    version="0.3",
     description="A library for bulk sending and processing of async requests",
     author="Bernardo Tonasse",
     author_email="btonasse@notyet.com",

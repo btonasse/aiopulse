@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
 import pytest
@@ -29,11 +29,11 @@ async def mock_send(dummy_processed_response, completion_order):
 @pytest.fixture
 async def mock_request_method(request):
     params = getattr(request, "param", dict())
-    mock_method = MagicMock(aiohttp.ClientSession.request)
+    mock_method = AsyncMock(aiohttp.ClientSession.request)
     if params.get("error"):
-        mock_method.return_value.__aexit__.side_effect = Exception("Some random exception")
+        mock_method.side_effect = aiohttp.ClientError("Some random exception")
     else:
-        mock_method.return_value.__aenter__.return_value = MagicMock(aiohttp.ClientResponse)
+        mock_method.return_value = MagicMock(aiohttp.ClientResponse)
     return mock_method
 
 
@@ -61,23 +61,24 @@ class TestClient:
         indirect=["dummy_queue"],
     )
     async def test_process_queue(self, dummy_queue: RequestQueue, dummy_factory, mock_send, loop, monkeypatch, expected_order, completion_order):
-        session = Client(1)
+        client = Client(1)
         monkeypatch.setattr(Client, "send", mock_send)
-        resps = await session.process_queue(dummy_queue, 10, dummy_factory)
+        async with aiohttp.ClientSession() as session:
+            resps = await client.process_queue(session, dummy_queue, 10, dummy_factory)
         assert len(resps) == 3
         assert completion_order == expected_order
 
     @pytest.mark.parametrize(
         "mock_request_method, error",
         [
-            ({"error": True}, "Exception: Some random exception"),
+            ({"error": True}, "ClientError: Some random exception"),
             ({"error": False}, None),
         ],
         indirect=["mock_request_method"],
     )
-    async def test_test(self, mock_request_method, monkeypatch, dummy_request, error, loop):
-        session = Client()
+    async def test_send(self, mock_request_method, monkeypatch, dummy_request, error, loop):
+        client = Client()
         monkeypatch.setattr(aiohttp.ClientSession, "request", mock_request_method)
-        async with aiohttp.ClientSession() as asyncsession:
-            resp = await session.send(asyncsession, dummy_request())
+        async with aiohttp.ClientSession() as session:
+            resp = await client.send(session, dummy_request())
         assert resp.error == error
