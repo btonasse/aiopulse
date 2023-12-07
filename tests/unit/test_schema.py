@@ -39,6 +39,3 @@ class TestGenericSchema:
             params = GenericInputSchema(**payload)
             assert isinstance(params.method, Method)
             assert params.method.value == "post"
-
-    def test_is_match(self, payload):
-        assert GenericInputSchema.is_match(payload)

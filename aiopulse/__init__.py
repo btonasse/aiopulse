@@ -1,7 +1,7 @@
 import logging
 
 from .client import Client
-from .factory import RequestFactory
+from .factory import RequestFactory, RequestFactoryMapping
 from .queue import RequestQueue
 from .request import Request
 from .response import ProcessedResponse
