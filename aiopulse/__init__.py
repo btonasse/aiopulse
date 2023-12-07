@@ -6,7 +6,7 @@ from .queue import RequestQueue
 from .request import Request
 from .response import ProcessedResponse
 from .schema import GenericInputSchema, InputSchemaBase
-from .transformer import BaseURLTransformer, GenericTransformer, TransformerBase
+from .transformer import TransformerBase
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

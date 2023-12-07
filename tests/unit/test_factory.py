@@ -1,6 +1,8 @@
+from typing import Any
+
 import pytest
 
-from aiopulse import GenericInputSchema, Request, RequestFactory, RequestFactoryMapping
+from aiopulse import GenericInputSchema, Request, RequestFactory, RequestFactoryMapping, TransformerBase
 
 
 @pytest.fixture
@@ -17,7 +19,28 @@ def always_true():
 
 
 @pytest.fixture
-def dummy_mapping(dummy_processor, dummy_transformer, always_true):
+def dummy_transformer():
+    class NoOp(TransformerBase):
+        def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+            return input_data
+
+    return NoOp
+
+
+@pytest.fixture
+def dummy_transformer_with_args():
+    class WithArgs(TransformerBase):
+        some_arg: int
+
+        def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+            input_data["some_arg"] = self.some_arg
+            return input_data
+
+    return WithArgs
+
+
+@pytest.fixture
+def dummy_mapping(dummy_processor, always_true, dummy_transformer):
     return RequestFactoryMapping(input_schema=GenericInputSchema, response_processor=dummy_processor, transformers=[dummy_transformer], is_match=always_true)
 
 
@@ -28,7 +51,7 @@ def setup_factory(factory: RequestFactory, dummy_mapping):
 
 
 class TestRequestFactory:
-    def test_register(self, factory: RequestFactory, dummy_processor, dummy_transformer, dummy_mapping, always_true):
+    def test_register(self, factory: RequestFactory, dummy_processor, dummy_mapping, always_true, dummy_transformer):
         factory.register_mapping(dummy_mapping)
         assert len(factory.mappings) == 1
         assert factory.mappings[0].input_schema is GenericInputSchema
@@ -36,10 +59,10 @@ class TestRequestFactory:
         assert factory.mappings[0].response_processor == dummy_processor
         assert factory.mappings[0].is_match == always_true
 
-    def test_apply_transformers(self, payload, factory: RequestFactory, dummy_transformer, dummy_transformer2):
-        t = factory.apply_transforms(data=payload, transformers=[dummy_transformer, dummy_transformer2])
-        assert "extra_info" in t.keys()
-        assert "even_more_extra_info" in t.keys()
+    def apply_extra_args(self, payload, dummy_transformer_with_args):
+        factory = RequestFactory(some_arg=1)
+        transformed = factory.apply_transforms(payload, [dummy_transformer_with_args])
+        assert "some_arg" in transformed.keys() and transformed["some_arg"] == 1
 
     def test_request_build(self, setup_factory: RequestFactory, payload):
         req = setup_factory.build_request(payload)

@@ -1,11 +1,10 @@
-from copy import deepcopy
 from typing import Any
 from unittest import mock
 
 import aiohttp
 import pytest
 
-from aiopulse import Client, GenericInputSchema, GenericTransformer, ProcessedResponse, Request, RequestFactory, RequestQueue
+from aiopulse import Client, GenericInputSchema, ProcessedResponse, Request, RequestFactory, RequestQueue, TransformerBase
 
 
 @pytest.fixture
@@ -33,22 +32,6 @@ def dummy_processor():
         return 42
 
     return func
-
-
-@pytest.fixture
-def dummy_transformer(payload) -> GenericTransformer:
-    transformer = mock.MagicMock(GenericTransformer)
-    payload["extra_info"] = 1234
-    transformer.transform_input.return_value = payload
-    return transformer
-
-
-@pytest.fixture
-def dummy_transformer2(payload) -> GenericTransformer:
-    transformer = mock.MagicMock(GenericTransformer)
-    payload["even_more_extra_info"] = 42
-    transformer.transform_input.return_value = payload
-    return transformer
 
 
 @pytest.fixture
