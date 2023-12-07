@@ -64,25 +64,44 @@ class AddHeaders(TransformerBase):
     headers: dict[str, str]
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        return input_data["headers"] | self.headers
+        copied_data = dict(input_data)
+        copied_data["headers"] = input_data["headers"] | self.headers
+        return copied_data
 
 
 class AddQueryParams(TransformerBase):
     params: dict[str, str]
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        return input_data["query_params"] | self.params
+        copied_data = dict(input_data)
+        copied_data["query_params"] = input_data["query_params"] | self.params
+        return copied_data
 
 
 class AddFormData(TransformerBase):
     form_data: dict[str, Any]
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        return input_data["form_data"] | self.form_data
+        copied_data = dict(input_data)
+        copied_data["form_data"] = input_data["form_data"] | self.form_data
+        return copied_data
 
 
 class AddToBody(TransformerBase):
     body: dict[str, Any]
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        return input_data["body"] | self.body
+        copied_data = dict(input_data)
+        copied_data["body"] = input_data["body"] | self.body
+        return copied_data
+
+
+class AddPathToURL(TransformerBase):
+    path: URL
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        copied_data = dict(input_data)
+        url: URL = input_data["url"]
+        qstring = url.query_string
+        copied_data["url"] = url.with_path(url.path + self.path.path) % qstring
+        return copied_data
