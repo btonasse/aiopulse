@@ -61,3 +61,12 @@ class AddPathToURL(TransformerBase):
         qstring = url.query_string
         input_data["url"] = url.with_path(url.path + self.path_to_add.path) % qstring
         return input_data
+
+
+class MergeDict(TransformerBase):
+    key: str
+    dict_to_merge: dict[str, Any]
+
+    def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
+        input_data[self.key] = input_data[self.key] | self.dict_to_merge
+        return input_data
