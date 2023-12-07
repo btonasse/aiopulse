@@ -8,6 +8,8 @@ from aiopulse.request import Method
 
 
 class TransformerBase(BaseModel, abc.ABC):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     @abc.abstractmethod
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
@@ -19,7 +21,6 @@ class GenericTransformer(TransformerBase):
 
 
 class BaseURLTransformer(TransformerBase):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
     base_url: URL
 
     # Todo: I'm repeating myself with this validation
