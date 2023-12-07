@@ -68,8 +68,8 @@ class RequestFactory:
             data (dict[str, Any]): A dictionary with the raw input data
 
         Raises:
-            ValueError: If the data doesn't match any of the mappings or the expected values in the transformer method
-            pydantic.ValidationError: If the input data doesn't match the schema or the transformer's
+            ValueError: If the data doesn't match any of the mappings, the input data doesn't pass validation or the transformation fails.
+            In fact, all error types are reraised as ValueError.
 
         Returns:
             A new `Request` instance
@@ -82,9 +82,9 @@ class RequestFactory:
                     input_data = mapping.input_schema(**data)
                     transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping.transformers)
                     return Request(response_processor=mapping.response_processor, **transformed_data)
-        except (ValidationError, ValueError) as err:
+        except Exception as err:
             self.logger.error(f"Failed building request. Error: {err}")
-            raise
+            raise ValueError("Failed building request.") from err
         self.logger.warning("Data didn't match any registered schemas")
         raise ValueError("Data didn't match any registered schemas")
 
