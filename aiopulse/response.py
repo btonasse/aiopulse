@@ -10,6 +10,7 @@ class ProcessedResponse(BaseModel):
     content: list[dict[str, Any]] = Field(default_factory=list)
     error: str | None
     chain: list[dict[str, Any]] = Field(default_factory=list)
+    pass_to_dependency: dict[str, Any] = Field(default_factory=dict)
 
 
 async def simple_json_processor(response: aiohttp.ClientResponse, request) -> ProcessedResponse:

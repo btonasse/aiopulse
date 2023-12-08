@@ -3,14 +3,14 @@ import logging
 from typing import Any
 
 from .factory import RequestFactory
-from .request import Request
+from .request import Counter, Request
 
 
 class RequestQueue:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self._queue: asyncio.Queue[Request] = asyncio.Queue()
-        self._deferred_requests: dict[int, list[Request]] = dict()
+        self._deferred_requests: dict[int, list[dict[str, Any]]] = dict()
         self.logger.debug("RequestQueue initialized.")
 
     async def add(self, request: Request) -> None:
@@ -38,33 +38,39 @@ class RequestQueue:
             err = "Failed building queue: input data has to be a list/array"
             raise TypeError(err)
         for payload in data:
-            request = factory.build_request(payload)
-
             if dependency is not None:
-                self.defer(request, dependency)
+                new_id = Counter()()
+                self.defer(payload, new_id, dependency)
             else:
+                request = factory.build_request(payload)
+
                 await self.add(request)
+                new_id = request.id
 
             chain = payload.get("chain")
             if chain:
-                self.logger.info(f"Request with id {request.id} has chained requests. Building them recursively...")
-                await self.build_queue(factory, chain, request.id)
+                self.logger.info(f"Request with id {new_id} has chained requests. Adding them to deferred queue...")
+                await self.build_queue(factory, chain, new_id)
 
-    def defer(self, request: Request, dependency: int) -> None:
-        self.logger.info(f"Request id {request.id} has a dependency (id {dependency}). Adding to deferred queue...")
+    def defer(self, payload: dict[str, Any], deferred_id: int, dependency: int) -> None:
+        self.logger.info(f"Deferred request id {deferred_id} has a dependency (id {dependency}). Adding to deferred queue...")
+        payload["id"] = deferred_id  # Make sure the generated id will be used to build the request
         deferred = self._deferred_requests.get(dependency)
         if not deferred:
-            self._deferred_requests[dependency] = [request]
+            self._deferred_requests[dependency] = [payload]
         else:
-            self._deferred_requests[dependency].append(request)
+            self._deferred_requests[dependency].append(payload)
 
-    async def add_deferred(self, dependency: int) -> None:
+    async def add_deferred(self, factory: RequestFactory, dependency: int, extra_args: dict[str, Any] = dict()) -> None:
         self.logger.info(f"Fetching deferred requests for dependency {dependency}...")
         deferred = self._deferred_requests.get(dependency)
         if deferred:
-            self.logger.info(f"Found {len(deferred)} dependent requests.")
-            for request in deferred:
-                await self.add(request)
+            self.logger.info(f"Found {len(deferred)} dependent requests. {len(extra_args)} extra args will be passed to chained data.")
+            for payload in deferred:
+                # Todo test this!
+                new_payload = payload | extra_args
+                new_request = factory.build_request(new_payload)
+                await self.add(new_request)
 
     def total_request_count(self) -> int:
         in_queue = self._queue.qsize()

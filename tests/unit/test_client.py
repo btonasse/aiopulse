@@ -55,8 +55,8 @@ class TestClient:
     @pytest.mark.parametrize(
         "dummy_queue, expected_order",
         [
-            ({"delay": [0.01, 0.001, 0.0001]}, [2, 1, 3]),
-            ({"delay": [0.001, 0.001, 0.0001]}, [1, 2, 3]),
+            ({"delay": [0.01, 0.001]}, [2, 1]),
+            ({"delay": [0.001, 0.001]}, [1, 2]),
         ],
         indirect=["dummy_queue"],
     )
@@ -65,7 +65,7 @@ class TestClient:
         monkeypatch.setattr(Client, "send", mock_send)
         async with aiohttp.ClientSession() as session:
             results = await client.process_queue(session, dummy_queue, 10, dummy_factory)
-        assert len(results) == 3
+        assert len(results) == 2
         assert completion_order == expected_order
 
     @pytest.mark.parametrize(

@@ -48,7 +48,7 @@ class Client:
                     self.logger.warning("Request with id %s failed. Any dependent requests will be skipped.", request.id)
                     continue
                 # Add deferred requests that depend on this response if any
-                await queue.add_deferred(request.id)
+                await queue.add_deferred(factory, request.id, response.pass_to_dependency)
                 # Add new requests created by the response processor
                 if response.chain:
                     await self._add_chained_requests(queue, factory, request.id, response.chain)

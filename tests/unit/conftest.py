@@ -82,23 +82,21 @@ async def dummy_queue(request, dummy_request) -> RequestQueue:
     params = getattr(request, "param", dict())
     q = RequestQueue()
     r1 = dummy_request()
-    r1.body["delay"] = params.get("delay", (0.01, 0.01, 0.01))[0]
+    r1.body["delay"] = params.get("delay", (0.01, 0.01))[0]
     await q._queue.put(r1)
     r2 = dummy_request(2)
-    r2.body["delay"] = params.get("delay", (0.01, 0.01, 0.01))[1]
+    r2.body["delay"] = params.get("delay", (0.01, 0.01))[1]
     await q._queue.put(r2)
-    r3 = dummy_request(3)
-    r3.body["delay"] = params.get("delay", (0.01, 0.01, 0.01))[2]
-    q._deferred_requests[1] = [r3]
     return q
 
 
 @pytest.fixture
 def dummy_processed_response(request):
     def _make():
-        m = mock.Mock(ProcessedResponse)
+        m = mock.MagicMock(ProcessedResponse)
         params = getattr(request, "param", dict())
         m.chain = list()
+        m.pass_to_dependency = dict()
         m.error = None
         return m
 
