@@ -67,7 +67,6 @@ class RequestQueue:
         if deferred:
             self.logger.info(f"Found {len(deferred)} dependent requests. {len(extra_args)} extra args will be passed to chained data.")
             for payload in deferred:
-                # Todo test this!
                 new_payload = payload | extra_args
                 try:
                     new_request = factory.build_request(new_payload)

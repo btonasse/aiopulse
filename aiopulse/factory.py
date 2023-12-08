@@ -85,6 +85,9 @@ class RequestFactory:
                     self.logger.info(f"Mapping '{mapping}' matched request data")
                     input_data = mapping.input_schema(**data)
                     transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping.transformers)
+                    # Allow for hardcoding the request id to account for deferred requests (this is an ugly hack, but we're too deep into coupling land by now)
+                    if "id" in data.keys():
+                        transformed_data["id"] = data["id"]
                     return Request(response_processor=mapping.response_processor, **transformed_data)
         except Exception as err:
             self.logger.error(f"Failed building request. {err.__class__.__name__}: {err}")

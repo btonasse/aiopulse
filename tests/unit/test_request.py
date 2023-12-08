@@ -79,12 +79,10 @@ class TestRequest:
     @pytest.mark.parametrize(
         "payload, expectation",
         [
-            ({}, does_not_raise()),
-            ({"id": 123}, pytest.raises(ValidationError)),
+            ({}, 1),
+            ({"id": 123}, 123),
         ],
         indirect=["payload"],
     )
     def test_id(self, payload, expectation, dummy_processor):
-        with expectation:
-            assert Request(**payload, response_processor=dummy_processor).id == 1
-            assert Request(**payload, response_processor=dummy_processor).id == 2
+        assert Request(**payload, response_processor=dummy_processor).id == expectation

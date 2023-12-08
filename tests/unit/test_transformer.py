@@ -37,7 +37,7 @@ class TestAddURLTransformer:
     @pytest.mark.parametrize(
         "base_url, input_data, raise_or_not, expected_url",
         [
-            ("http://www.basedomain.com", None, pytest.raises(KeyError), None),
+            ("http://www.basedomain.com", None, does_not_raise(), "http://www.basedomain.com"),
             ("http://www.basedomain.com", "api/v0/endpoint", pytest.raises(ValueError), None),
             ("http://www.basedomain.com", yarl.URL("api/v0/endpoint"), does_not_raise(), "http://www.basedomain.com/api/v0/endpoint"),
             ("http://www.basedomain.com", yarl.URL("api/v0/endpoint?param=1"), does_not_raise(), "http://www.basedomain.com/api/v0/endpoint?param=1"),
@@ -49,6 +49,5 @@ class TestAddURLTransformer:
     def test_transform_input(self, base_url, input_data, raise_or_not, expected_url):
         with raise_or_not:
             transformed = AddBaseURL(base_url=base_url).transform_input(input_data)
-            print(type(input_data), transformed)
             assert all(key in transformed.keys() for key in input_data.keys())
             assert str(transformed["url"]) == expected_url
