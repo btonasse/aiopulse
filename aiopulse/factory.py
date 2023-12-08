@@ -82,12 +82,12 @@ class RequestFactory:
         try:
             for mapping in self.mappings:
                 if mapping.is_match(data):
-                    self.logger.info(f"Mapping '{mapping.__class__.__name__}' matched request data")
+                    self.logger.info(f"Mapping '{mapping}' matched request data")
                     input_data = mapping.input_schema(**data)
                     transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping.transformers)
                     return Request(response_processor=mapping.response_processor, **transformed_data)
         except Exception as err:
-            self.logger.error(f"Failed building request. Error: {err}")
+            self.logger.error(f"Failed building request. {err.__class__.__name__}: {err}")
             raise ValueError("Failed building request.") from err
         self.logger.warning("Data didn't match any registered schemas")
         raise ValueError("Data didn't match any registered schemas")

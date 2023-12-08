@@ -30,7 +30,7 @@ class AddBaseURL(TransformerBase):
         return url
 
     def transform_input(self, input_data: dict[str, Any]) -> dict[str, Any]:
-        url: URL = input_data["url"]
+        url: URL | None = input_data.get("url")
         if not url:
             input_data["url"] = self.base_url
         else:
