@@ -8,7 +8,7 @@ class ProcessedResponse(BaseModel):
     ok: bool
     status: int = Field(ge=100, lt=600)
     content: list[dict[str, Any]] = Field(default_factory=list)
-    error: str | None
+    error: str | None = None
     chain: list[dict[str, Any]] = Field(default_factory=list)
     pass_to_dependency: dict[str, Any] = Field(default_factory=dict)
 
