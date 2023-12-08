@@ -39,7 +39,6 @@ class TestQueue:
         assert len(queue._deferred_requests) == 1
         deferred = queue._deferred_requests.get(1)
         assert isinstance(deferred, list)
-        assert deferred[0].get("id") == 2
 
     async def test_total_count(self, queue: RequestQueue, dummy_request, payload):
         await queue.add(dummy_request())

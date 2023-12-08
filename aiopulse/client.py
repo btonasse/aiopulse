@@ -56,11 +56,8 @@ class Client:
 
     async def _add_chained_requests(self, queue: RequestQueue, factory: RequestFactory, dependency: int, data: list[dict[str, Any]]) -> None:
         self.logger.info("Adding chained requests created by request id %s", dependency)
-        try:
-            await queue.build_queue(factory, data)
-            self.logger.info("Chained requests created by request id %s added to queue", dependency)
-        except (ValidationError, ValueError) as err:
-            self.logger.error("Could not build chained requests for request of id %s. Skipping rest of chain. Error: %s", dependency, str(err))
+        await queue.build_queue(factory, data)
+        self.logger.info("Chained requests created by request id %s added to queue", dependency)
 
     def _prepare_request(self, request: Request) -> dict[str, Any]:
         params = {

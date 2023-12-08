@@ -52,6 +52,16 @@ class Request(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
+    def no_id_in_payload(cls, data: Any) -> Any:
+        try:
+            if data.get("id"):
+                raise ValueError("'id' is a reserved keyword and cannot be used in the request construction payload")
+        except AttributeError as err:
+            raise ValueError(str(err))
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
     def validate_response_processor(cls, data: Any) -> Any:
         try:
             processor = data.get("response_processor")
