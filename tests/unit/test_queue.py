@@ -43,9 +43,9 @@ class TestQueue:
     async def test_total_count(self, queue: RequestQueue, dummy_request, payload):
         await queue.add(dummy_request())
         await queue.add(dummy_request())
-        queue._deferred_requests[1] = [dummy_request(), dummy_request(), dummy_request()]
-        queue._deferred_requests[2] = [payload]
-        assert queue.total_request_count() == 6
+        queue._deferred_requests[1] = [payload, payload, payload]
+        queue._deferred_requests[2] = [payload, {"chain": [payload, payload]}]
+        assert queue.total_request_count() == 9
 
     async def test_add_deferred(self, queue: RequestQueue, payload, dummy_factory, dummy_request):
         req1 = dummy_request(1)

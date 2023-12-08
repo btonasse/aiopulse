@@ -49,7 +49,11 @@ class RequestQueue:
 
     def defer(self, chain: list[dict[str, Any]], dependency: int) -> None:
         self.logger.info("Request id %s has %s dependent requests. Adding to deferred queue...", dependency, len(chain))
-        self._deferred_requests[dependency] = chain
+        dependencies = self._deferred_requests.get(dependency)
+        if dependencies:
+            self._deferred_requests[dependency].extend(chain)
+        else:
+            self._deferred_requests[dependency] = chain
 
     async def add_deferred(self, factory: RequestFactory, dependency: int, extra_args: dict[str, Any] = dict()) -> None:
         self.logger.info("Fetching deferred requests for dependency %s...", dependency)
@@ -61,9 +65,21 @@ class RequestQueue:
     def request_count(self) -> int:
         return self._queue.qsize()
 
+    def get_all_deferred(self) -> list[dict[str, Any]]:
+        return [deferred for deferred_list in self._deferred_requests.values() for deferred in deferred_list]
+
     def deferred_count(self) -> int:
-        # Todo recurse and get all
-        return sum(len(reqs) for reqs in self._deferred_requests.values())
+        def _count_recursively(deferred_list: list[dict[str, Any]]) -> int:
+            count = 0
+            for payload in deferred_list:
+                count += 1
+                chain: list[dict[str, Any]] | None = payload.get("chain")
+                if chain:
+                    count += _count_recursively(chain)
+
+            return count
+
+        return _count_recursively(self.get_all_deferred())
 
     def total_request_count(self) -> int:
         return self.request_count() + self.deferred_count()

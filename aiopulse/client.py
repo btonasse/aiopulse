@@ -47,17 +47,14 @@ class Client:
                 if not response or not response.ok:
                     self.logger.warning("Request with id %s failed. Any dependent requests will be skipped.", request.id)
                     continue
-                # Add deferred requests that depend on this response if any
-                await queue.add_deferred(factory, request.id, response.pass_to_dependency)
                 # Add new requests created by the response processor
                 if response.chain:
-                    await self._add_chained_requests(queue, factory, request.id, response.chain)
-        return results
+                    self.logger.info("Adding chained requests created by request id %s", request.id)
+                    queue.defer(response.chain, request.id)
+                # Add deferred requests that depend on this response if any
+                await queue.add_deferred(factory, request.id, response.pass_to_dependency)
 
-    async def _add_chained_requests(self, queue: RequestQueue, factory: RequestFactory, dependency: int, data: list[dict[str, Any]]) -> None:
-        self.logger.info("Adding chained requests created by request id %s", dependency)
-        await queue.build_queue(factory, data)
-        self.logger.info("Chained requests created by request id %s added to queue", dependency)
+        return results
 
     def _prepare_request(self, request: Request) -> dict[str, Any]:
         params = {
