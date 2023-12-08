@@ -69,8 +69,11 @@ class RequestQueue:
             for payload in deferred:
                 # Todo test this!
                 new_payload = payload | extra_args
-                new_request = factory.build_request(new_payload)
-                await self.add(new_request)
+                try:
+                    new_request = factory.build_request(new_payload)
+                    await self.add(new_request)
+                except Exception as e:
+                    self.logger.error("Could not build chained request with id %s. Skipping.", payload.get("id"))
 
     def total_request_count(self) -> int:
         in_queue = self._queue.qsize()
