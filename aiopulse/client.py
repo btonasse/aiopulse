@@ -39,7 +39,7 @@ class Client:
                 break
             tasks = [asyncio.create_task(self.send(session, request)) for request in batch]
             processed_responses: list[ProcessedResponse | None] = await asyncio.gather(*tasks)
-            self.logger.info("Finished request batch. Processing responses...")
+            self.logger.info("Finished request batch.")
             for i, response in enumerate(processed_responses):
                 request = batch[i]
                 results.append(ProcessingResult(request=request, response=response))
