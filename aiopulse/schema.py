@@ -16,9 +16,9 @@ class InputSchemaBase(BaseModel):
 
     def __get_pydantic_core_schema__(self, source, handler):
         if isinstance(source, URL):
-            schema = handler(str(source))
+            schema = handler(str(source), handler)
         else:
-            schema = handler(source)
+            schema = handler(source, handler)
         return schema
 
 
