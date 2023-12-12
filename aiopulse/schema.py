@@ -8,14 +8,6 @@ from yarl import URL
 from .request import Method
 
 
-@classmethod
-def URL_pydantic_core_schema(cls, source, handler):
-    return handler(str(source))
-
-
-URL.__get_pydantic_core_schema__ = URL_pydantic_core_schema  # type: ignore
-
-
 class InputSchemaBase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
