@@ -33,7 +33,7 @@ class RequestFactoryMapping(BaseModel):
     is_match: Matcher = Field(exclude=True)
 
     def __str__(self) -> str:
-        return f"RequestFactoryMapping(title='{self.title} | 'input_schema='{self.input_schema.__name__}' | transformers={[t.__name__ for t in self.transformers]} | processor='{self.response_processor.__name__}' | matcher='{self.is_match.__name__}'"
+        return f"RequestFactoryMapping(title='{self.title}' | input_schema='{self.input_schema.__name__}' | transformers={[t.__name__ for t in self.transformers]} | processor='{self.response_processor.__name__}' | matcher='{self.is_match.__name__}'"
 
     def get_input_schema(self) -> dict:
         return {"title": self.title, "description": self.description, "input_schema": self.input_schema.model_json_schema()}
