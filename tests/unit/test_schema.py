@@ -39,3 +39,7 @@ class TestGenericSchema:
             params = GenericInputSchema(**payload)
             assert isinstance(params.method, Method)
             assert params.method.value == "post"
+
+    def test_json_generation(self):
+        with does_not_raise():
+            assert print(GenericInputSchema.model_json_schema())
