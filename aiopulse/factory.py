@@ -42,11 +42,9 @@ class RequestFactoryMapping(BaseModel):
 class RequestFactory:
     """Create new Request instances based on mappings defined at runtime.
 
-    Args:
-        `transformer_args`: A dictionary containing arguments to be passed to the transformer constructors
-
     Attributes:
         `mappings` (list[RequestFactoryMapping]): A list of registered mappings. The order of insertion matters, since they are checked one by one when building a new `Request`
+        `transformer_args`: A dictionary containing arguments to be passed to the transformer constructors
 
     Methods:
         `register_mapping`: register new mappings.
@@ -55,10 +53,10 @@ class RequestFactory:
 
     mappings: list[RequestFactoryMapping]
 
-    def __init__(self, **transformer_args) -> None:
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.mappings = []
-        self.transformer_args = transformer_args or dict()
+        self.transformer_args = dict()
         self.logger.debug("RequestFactory initialized.")
 
     def register_mapping(self, mapping: RequestFactoryMapping) -> None:
@@ -118,3 +116,6 @@ class RequestFactory:
             self.logger.info(f"Applying '{transformer.__name__}'...")
             copied_data = transformer_instance.transform_input(copied_data)
         return copied_data
+
+    def set_transformer_args(self, **transformer_args) -> None:
+        self.transformer_args = transformer_args
