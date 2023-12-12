@@ -60,7 +60,8 @@ class TestRequestFactory:
         assert factory.mappings[0].is_match == always_true
 
     def apply_extra_args(self, payload, dummy_transformer_with_args):
-        factory = RequestFactory(some_arg=1)
+        factory = RequestFactory()
+        factory.set_transformer_args(some_arg=1)
         transformed = factory.apply_transforms(payload, [dummy_transformer_with_args])
         assert "some_arg" in transformed.keys() and transformed["some_arg"] == 1
 
