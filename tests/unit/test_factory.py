@@ -41,7 +41,7 @@ def dummy_transformer_with_args():
 
 @pytest.fixture
 def dummy_mapping(dummy_processor, always_true, dummy_transformer):
-    return RequestFactoryMapping(input_schema=GenericInputSchema, response_processor=dummy_processor, transformers=[dummy_transformer], is_match=always_true)
+    return RequestFactoryMapping(title="Dummy", description="Dummy mapping", input_schema=GenericInputSchema, response_processor=dummy_processor, transformers=[dummy_transformer], is_match=always_true)
 
 
 @pytest.fixture
