@@ -1,11 +1,10 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
-import yarl
 from pydantic import ValidationError
 
 from aiopulse import GenericInputSchema
-from aiopulse.request import Method
+from aiopulse.data_types import Method, SerializableURL
 
 
 class TestGenericSchema:
@@ -22,7 +21,7 @@ class TestGenericSchema:
     def test_validate_url(self, payload, expectation):
         with expectation:
             params = GenericInputSchema(**payload)
-            assert isinstance(params.url, yarl.URL)
+            assert isinstance(params.url, SerializableURL)
 
     @pytest.mark.parametrize(
         "payload, expectation",
@@ -42,4 +41,4 @@ class TestGenericSchema:
 
     def test_json_generation(self):
         with does_not_raise():
-            assert print(GenericInputSchema.model_json_schema())
+            assert GenericInputSchema.model_json_schema()

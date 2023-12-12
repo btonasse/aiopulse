@@ -1,11 +1,11 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
-import yarl
 from pydantic import ValidationError
+from yarl import URL
 
 from aiopulse import Request
-from aiopulse.request import Counter, Method
+from aiopulse.data_types import Counter, Method, SerializableURL
 
 
 @pytest.fixture(autouse=True)
@@ -49,7 +49,7 @@ class TestRequest:
     def test_validate_url(self, payload, expectation, dummy_processor):
         with expectation:
             req = Request(**payload, response_processor=dummy_processor)
-            assert isinstance(req.url, yarl.URL)
+            assert isinstance(req.url, URL)
 
     @pytest.mark.parametrize(
         "payload, expectation",

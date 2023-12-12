@@ -1,10 +1,10 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
-import yarl
 from pydantic import ValidationError
 
-from aiopulse.transformer import AddBaseURL, TransformerBase
+from aiopulse.data_types import SerializableURL
+from aiopulse.transformer import AddBaseURL
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ class TestAddURLTransformer:
     def test_validate_url(self, base_url, expectation):
         with expectation:
             transformer = AddBaseURL(base_url=base_url)
-            assert isinstance(transformer.base_url, yarl.URL)
+            assert isinstance(transformer.base_url, SerializableURL)
             assert str(transformer.base_url) == base_url
 
     @pytest.mark.parametrize(
@@ -39,10 +39,10 @@ class TestAddURLTransformer:
         [
             ("http://www.basedomain.com", None, does_not_raise(), "http://www.basedomain.com"),
             ("http://www.basedomain.com", "api/v0/endpoint", pytest.raises(ValueError), None),
-            ("http://www.basedomain.com", yarl.URL("api/v0/endpoint"), does_not_raise(), "http://www.basedomain.com/api/v0/endpoint"),
-            ("http://www.basedomain.com", yarl.URL("api/v0/endpoint?param=1"), does_not_raise(), "http://www.basedomain.com/api/v0/endpoint?param=1"),
-            ("http://www.basedomain.com/some/path", yarl.URL("api/v0/endpoint"), does_not_raise(), "http://www.basedomain.com/some/path/api/v0/endpoint"),
-            ("http://www.basedomain.com/some/path", yarl.URL("api/v0/endpoint?param=1"), does_not_raise(), "http://www.basedomain.com/some/path/api/v0/endpoint?param=1"),
+            ("http://www.basedomain.com", SerializableURL("api/v0/endpoint"), does_not_raise(), "http://www.basedomain.com/api/v0/endpoint"),
+            ("http://www.basedomain.com", SerializableURL("api/v0/endpoint?param=1"), does_not_raise(), "http://www.basedomain.com/api/v0/endpoint?param=1"),
+            ("http://www.basedomain.com/some/path", SerializableURL("api/v0/endpoint"), does_not_raise(), "http://www.basedomain.com/some/path/api/v0/endpoint"),
+            ("http://www.basedomain.com/some/path", SerializableURL("api/v0/endpoint?param=1"), does_not_raise(), "http://www.basedomain.com/some/path/api/v0/endpoint?param=1"),
         ],
         indirect=["input_data"],
     )

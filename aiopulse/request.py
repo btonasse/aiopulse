@@ -1,40 +1,12 @@
 from __future__ import annotations
 
-from enum import StrEnum, auto
 from typing import Any, Callable, Coroutine
 
 import aiohttp
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from yarl import URL
 
+from .data_types import Counter, Method, SerializableURL
 from .response import ProcessedResponse
-
-
-class Counter:
-    _counter: int = 0
-
-    def __call__(self) -> int:
-        Counter._counter += 1
-        return Counter._counter
-
-
-class Method(StrEnum):
-    """
-    HTTP methods enum
-    """
-
-    GET = auto()
-    POST = auto()
-    PUT = auto()
-    PATCH = auto()
-    DELETE = auto()
-
-    @classmethod
-    def _missing_(cls, value: str):
-        # Accept values in all cases
-        for member in cls:
-            if member.lower() == value.lower():
-                return member
 
 
 class Request(BaseModel):
@@ -42,7 +14,7 @@ class Request(BaseModel):
 
     id: int = Field(default_factory=Counter())
     description: str
-    url: URL
+    url: SerializableURL
     method: Method
     body: dict[str, Any] = Field(default_factory=dict)
     headers: dict[str, str] = Field(default_factory=dict)
@@ -70,16 +42,12 @@ class Request(BaseModel):
             raise ValueError(str(err))
         return data
 
-    @field_validator("url", mode="before")
+    @field_validator("url", mode="after")
     @classmethod
-    def validate_url(cls, v: Any) -> URL:
-        try:
-            url = URL(v)
-        except TypeError as err:
-            raise ValueError("Cannot construct URL from a type other than str")
-        if not url.is_absolute():
+    def validate_url(cls, v: SerializableURL) -> SerializableURL:
+        if not v.is_absolute():
             raise ValueError("Could not construct an absolute URL")
-        return url
+        return v
 
     @model_validator(mode="after")
     def either_payload_or_formdata(self) -> Request:
@@ -89,7 +57,7 @@ class Request(BaseModel):
 
     @model_validator(mode="after")
     def add_query_params(self) -> Request:
-        self.url = self.url.update_query(self.query_params)
+        self.url = self.url.update_query(self.query_params)  # type: ignore
         return self
 
     async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:

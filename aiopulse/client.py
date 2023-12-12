@@ -3,7 +3,7 @@ import logging
 from typing import Any
 
 import aiohttp
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from .factory import RequestFactory
 from .queue import RequestQueue
