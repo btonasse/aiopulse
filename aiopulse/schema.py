@@ -14,6 +14,13 @@ class InputSchemaBase(BaseModel):
     description: str
     chain: list[InputSchemaBase] | None = None
 
+    def __get_pydantic_core_schema__(self, source, handler):
+        if isinstance(source, URL):
+            schema = handler(str(source))
+        else:
+            schema = handler(source)
+        return schema
+
 
 class GenericInputSchema(InputSchemaBase):
     url: URL
