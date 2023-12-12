@@ -8,19 +8,19 @@ from yarl import URL
 from .request import Method
 
 
+@classmethod
+def URL_pydantic_core_schema(cls, source, handler):
+    return handler(str(source))
+
+
+URL.__get_pydantic_core_schema__ = URL_pydantic_core_schema  # type: ignore
+
+
 class InputSchemaBase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     description: str
     chain: list[InputSchemaBase] | None = None
-
-    @classmethod
-    def __get_pydantic_core_schema__(cls, source, handler):
-        if isinstance(source, URL):
-            schema = handler(str(source))
-        else:
-            schema = handler(source)
-        return schema
 
 
 class GenericInputSchema(InputSchemaBase):
