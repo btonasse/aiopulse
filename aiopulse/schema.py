@@ -14,7 +14,8 @@ class InputSchemaBase(BaseModel):
     description: str
     chain: list[InputSchemaBase] | None = None
 
-    def __get_pydantic_core_schema__(self, source, handler):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source, handler):
         if isinstance(source, URL):
             schema = handler(str(source), handler)
         else:
