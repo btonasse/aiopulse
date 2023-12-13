@@ -8,10 +8,18 @@ from .data_types import Method, SerializableURL
 
 
 class InputSchemaBase(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    # model_config = ConfigDict(arbitrary_types_allowed=True)
 
     description: str
     chain: list[dict[str, Any]] | None = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
+        @staticmethod
+        def json_schema_extra(schema: dict[str, Any], model: type["InputSchemaBase"]) -> None:
+            for prop in schema.get("properties", {}).values():
+                prop.pop("title", None)
 
 
 class GenericInputSchema(InputSchemaBase):
