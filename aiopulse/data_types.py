@@ -30,7 +30,7 @@ class SerializableURL(URL):  # type: ignore
 
     @classmethod
     def __get_pydantic_json_schema__(cls, _core_schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
-        return handler(core_schema.str_schema())
+        return handler(core_schema.url_schema())
 
 
 class Counter:
