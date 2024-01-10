@@ -4,7 +4,7 @@ from unittest import mock
 import aiohttp
 import pytest
 
-from aiopulse import Client, GenericInputSchema, ProcessedResponse, Request, RequestFactory, RequestQueue
+from aiopulse import Aiopulse, GenericInputSchema, ProcessedResponse, Request, RequestFactory, RequestQueue
 
 
 @pytest.fixture
@@ -59,6 +59,7 @@ def dummy_request(request, dummy_processed_response):
         m.headers = dict()
         m.form_data = params.get("form_data") or dict()
         m.process_response.return_value = dummy_processed_response()
+        m.prepare.return_value = {"method": "GET", "url": "https://www.somehost.com/somepath", "headers": dict(), "json": dict()}
         return m
 
     return _make
@@ -72,8 +73,8 @@ def dummy_factory(dummy_request) -> RequestFactory:
 
 
 @pytest.fixture
-def dummy_client() -> Client:
-    s = mock.Mock(Client)
+def dummy_client() -> Aiopulse:
+    s = mock.Mock(Aiopulse)
     return s
 
 

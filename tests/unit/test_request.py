@@ -88,3 +88,17 @@ class TestRequest:
         with expectation:
             assert Request(**payload, response_processor=dummy_processor).id == 1
             assert Request(**payload, response_processor=dummy_processor).id == 2
+
+    @pytest.mark.parametrize(
+        "payload, payload_type",
+        [
+            ({"body": {"some": "thing"}}, "json"),
+            ({"form_data": {"some": "thing"}, "remove_key": "body"}, "data"),
+        ],
+        indirect=["payload"],
+    )
+    def test_prepare_request(self, payload, dummy_processor, payload_type):
+        req = Request(**payload, response_processor=dummy_processor)
+        prepared = req.prepare()
+        assert not (prepared.get("json") is not None and prepared.get("data") is not None)
+        assert prepared.get(payload_type) == {"some": "thing"}

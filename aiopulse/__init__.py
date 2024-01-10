@@ -1,6 +1,6 @@
 import logging
 
-from .client import Client
+from .client import Aiopulse
 from .factory import RequestFactory, RequestFactoryMapping
 from .queue import RequestQueue
 from .request import Request

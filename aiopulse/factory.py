@@ -1,42 +1,9 @@
 import logging
-from typing import Any, Callable, Coroutine
+from typing import Any
 
-import aiohttp
-from pydantic import BaseModel, Field
-
+from .mapping import RequestFactoryMapping
 from .request import Request
-from .response import ProcessedResponse
-from .schema import InputSchemaBase
 from .transformer import TransformerBase
-
-ResponseProcessor = Callable[[aiohttp.ClientResponse, Request], Coroutine[Any, Any, ProcessedResponse]]
-Matcher = Callable[[Any], bool]
-
-
-class RequestFactoryMapping(BaseModel):
-    """Contains all the needed parts for parsing payloads and building a request
-
-    Attributes:
-        title (str): The mapping title
-        description(str): The mapping description
-        input_schema (type[InputSchemaBase]): The pydantic class representing the expected schema of the raw input. Note this expects the class itself, not an instance
-        transformers (list[type[TransformerBase]]): A list of `TransformerBase` types, which will sequentially take the previously validated raw input and further transform it into data ready to construct a `Request`
-        response_processor (ResponseProcessor): A function that takes a `aiohttp.ClientResponse` and returns a `ProcessedResponse`
-        is_match (Matcher): A predicate function used to check against an input payload if it applies to this mapping
-    """
-
-    title: str
-    description: str
-    input_schema: type[InputSchemaBase]
-    transformers: list[type[TransformerBase]] = Field(exclude=True)
-    response_processor: ResponseProcessor = Field(exclude=True)
-    is_match: Matcher = Field(exclude=True)
-
-    def __str__(self) -> str:
-        return f"RequestFactoryMapping(title='{self.title}' | input_schema='{self.input_schema.__name__}' | transformers={[t.__name__ for t in self.transformers]} | processor='{self.response_processor.__name__}' | matcher='{self.is_match.__name__}'"
-
-    def get_input_schema(self) -> dict:
-        return {"title": self.title, "description": self.description, "input_schema": self.input_schema.model_json_schema()}
 
 
 class RequestFactory:
@@ -68,27 +35,27 @@ class RequestFactory:
         self.logger.info(f"New request mapping: {mapping}")
         self.mappings.append(mapping)
 
-    def build_request(self, data: dict[str, Any]) -> Request:
-        """Checks if the input data matches any previously registered mappings and build a new `Request` after being validated/transformed.
+    def build_request(self, data: dict[str, Any], extra_input_args: dict[str, Any] = dict()) -> Request:
+        """Checks if the input data matches any previously registered mappings and builds a new `Request` after being validated/transformed.
 
-        Note that the order of mapping registration is important, since they are checked one by one in insertion order until a match is found
+        Note that the order of mapping registration is important, as they are checked one by one in insertion order until a match is found.
 
         Args:
-            data (dict[str, Any]): A dictionary with the raw input data
+            data (dict[str, Any]): A dictionary with the raw input data.
+            extra_input_args (dict[str, Any], optional): Additional input arguments to be passed to the input schema. Defaults to an empty dictionary.
 
         Raises:
-            ValueError: If the data doesn't match any of the mappings, the input data doesn't pass validation or the transformation fails.
-            In fact, all error types are reraised as ValueError.
+            ValueError: If the data doesn't match any of the mappings, the input data doesn't pass validation, or the transformation fails.
 
         Returns:
-            A new `Request` instance
+            Request: A new `Request` instance.
         """
         self.logger.info("Building request...")
         try:
             for mapping in self.mappings:
                 if mapping.is_match(data):
                     self.logger.info(f"Mapping {mapping} matched request data")
-                    input_data = mapping.input_schema(**data)
+                    input_data = mapping.input_schema(**data | extra_input_args)
                     transformed_data = self.apply_transforms(input_data.model_dump(exclude={"chain"}), mapping.transformers)
                     request = Request(response_processor=mapping.response_processor, **transformed_data)
                     self.logger.info("New request (id %s) successfully created", request.id)

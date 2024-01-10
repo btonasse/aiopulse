@@ -60,6 +60,24 @@ class Request(BaseModel):
         self.url = self.url.update_query(self.query_params)  # type: ignore
         return self
 
+    def prepare(self) -> dict[str, Any]:
+        """
+        Prepares the request parameters for aiohttp's request method.
+
+        Returns:
+            dict[str, Any]: The prepared request parameters.
+        """
+        params = {
+            "method": self.method,
+            "url": self.url,
+            "headers": self.headers,
+        }
+        if self.body:
+            params["json"] = self.body
+        elif self.form_data:
+            params["data"] = self.form_data
+        return params
+
     async def process_response(self, response: aiohttp.ClientResponse) -> ProcessedResponse:
         resp = await self.response_processor(response, self)
         return resp

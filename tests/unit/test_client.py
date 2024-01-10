@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 import pytest
 
-from aiopulse import Client, ProcessedResponse, RequestQueue
+from aiopulse import Aiopulse, ProcessedResponse, RequestQueue
 
 
 @pytest.fixture
@@ -39,20 +39,6 @@ async def mock_request_method(request):
 
 class TestClient:
     @pytest.mark.parametrize(
-        "dummy_request, payload_type",
-        [
-            ({"body": {"some": "thing"}}, "json"),
-            ({"form_data": {"some": "thing"}}, "data"),
-        ],
-        indirect=["dummy_request"],
-    )
-    def test_prepare_request(self, dummy_request, payload_type):
-        session = Client()
-        req = session._prepare_request(dummy_request())
-        assert not (req.get("json") is not None and req.get("data") is not None)
-        assert req.get(payload_type) == {"some": "thing"}
-
-    @pytest.mark.parametrize(
         "dummy_queue, expected_order",
         [
             ({"delay": [0.01, 0.001]}, [2, 1]),
@@ -60,11 +46,12 @@ class TestClient:
         ],
         indirect=["dummy_queue"],
     )
-    async def test_process_queue(self, dummy_queue: RequestQueue, dummy_factory, mock_send, loop, monkeypatch, expected_order, completion_order):
-        client = Client(1)
-        monkeypatch.setattr(Client, "send", mock_send)
+    async def test_process_queue(self, mock_send, dummy_queue, loop, monkeypatch, expected_order, completion_order):
+        client = Aiopulse(1)
+        client.queue = dummy_queue
+        monkeypatch.setattr(Aiopulse, "send", mock_send)
         async with aiohttp.ClientSession() as session:
-            results = await client.process_queue(session, dummy_queue, 10, dummy_factory)
+            results = await client.process_queue(session, 10)
         assert len(results) == 2
         assert completion_order == expected_order
 
@@ -77,7 +64,7 @@ class TestClient:
         indirect=["mock_request_method"],
     )
     async def test_send(self, mock_request_method, monkeypatch, dummy_request, expected_type, loop):
-        client = Client()
+        client = Aiopulse()
         monkeypatch.setattr(aiohttp.ClientSession, "request", mock_request_method)
         async with aiohttp.ClientSession() as session:
             resp = await client.send(session, dummy_request())
