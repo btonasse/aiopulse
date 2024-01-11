@@ -14,7 +14,7 @@ def completion_order():
 
 @pytest.fixture
 async def mock_send(dummy_processed_response, completion_order):
-    async def patched_send(self, session, request):
+    async def patched_send(self, session, request, timeout):
         delay = request.body.get("delay", 0.01)
         resp = dummy_processed_response()
         resp.content = [{"delay": delay}]
