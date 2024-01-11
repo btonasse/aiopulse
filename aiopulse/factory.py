@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from pydantic import ValidationError
+
 from .mapping import RequestBuildMapping
 from .request import Request
 from .transformer import TransformerBase
@@ -60,9 +62,14 @@ class RequestFactory:
                     request = Request(response_processor=mapping.response_processor, **transformed_data)
                     self.logger.info("New request (id %s) successfully created", request.id)
                     return request
+
         except Exception as err:
-            self.logger.error(f"Failed building request. {err.__class__.__name__}: {err}")
-            raise ValueError(f"Failed building request. {err.__class__.__name__}: {err}") from err
+            if isinstance(err, ValidationError):
+                msg = err.json(indent=2, include_url=False, include_input=False)
+            else:
+                msg = f"{err.__class__.__name__}: {err}"
+            self.logger.error("Failed building request. %s", msg)
+            raise ValueError(f"Failed building request. {msg}") from err
         self.logger.warning("Data didn't match any registered schemas")
         raise ValueError("Data didn't match any registered schemas")
 
