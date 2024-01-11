@@ -47,11 +47,11 @@ class TestClient:
         indirect=["dummy_queue"],
     )
     async def test_process_queue(self, mock_send, dummy_queue, loop, monkeypatch, expected_order, completion_order):
-        client = Aiopulse(1)
+        client = Aiopulse()
         client.queue = dummy_queue
         monkeypatch.setattr(Aiopulse, "send", mock_send)
         async with aiohttp.ClientSession() as session:
-            results = await client.process_queue(session, 10)
+            results = await client.process_queue(session, 10, 1)
         assert len(results) == 2
         assert completion_order == expected_order
 
