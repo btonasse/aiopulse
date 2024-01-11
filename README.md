@@ -21,5 +21,8 @@ pip install aiopulse
 # Usage
 
 ```python
-from aiopulse import Aiopulse
+from aiopulse import Aiopulse, RequestBuildMapping
+
+# A create a new client class
+client = Aiopulse()
 ```
