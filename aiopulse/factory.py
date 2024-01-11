@@ -62,7 +62,7 @@ class RequestFactory:
                     return request
         except Exception as err:
             self.logger.error(f"Failed building request. {err.__class__.__name__}: {err}")
-            raise ValueError("Failed building request.") from err
+            raise ValueError(f"Failed building request. {err.__class__.__name__}: {err}") from err
         self.logger.warning("Data didn't match any registered schemas")
         raise ValueError("Data didn't match any registered schemas")
 
