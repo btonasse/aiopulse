@@ -84,5 +84,5 @@ class RequestFactory:
             copied_data = transformer_instance.transform_input(copied_data)
         return copied_data
 
-    def set_transformer_args(self, **transformer_args) -> None:
-        self.transformer_args = transformer_args
+    def set_transformer_args(self, mapping_title: str, **transformer_args) -> None:
+        self.transformer_args[mapping_title] = transformer_args

@@ -31,6 +31,9 @@ class Aiopulse:
     async def build_and_add_to_queue(self, data: dict[str, Any], chain_keyword: str = "chain", extra_args: dict[str, Any] = dict()) -> None:
         await self.queue.build_and_add(self.factory, data, chain_keyword=chain_keyword, extra_args=extra_args)
 
+    def set_transformer_args(self, mapping_title: str, **args: dict[str, Any]) -> None:
+        self.factory.set_transformer_args(mapping_title, **args)
+
     async def process_queue(self, session: aiohttp.ClientSession, batch_size: int, timeout: int = 60) -> list[ProcessingResult]:
         self.logger.info(f"Triggering queue processing. Batch size = {batch_size}")
         results: list[ProcessingResult] = []
