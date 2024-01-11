@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from aiopulse import GenericInputSchema, Request, RequestFactory, RequestFactoryMapping, TransformerBase
+from aiopulse import GenericInputSchema, Request, RequestBuildMapping, RequestFactory, TransformerBase
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def dummy_transformer_with_args():
 
 @pytest.fixture
 def dummy_mapping(dummy_processor, always_true, dummy_transformer):
-    return RequestFactoryMapping(title="Dummy", description="Dummy mapping", input_schema=GenericInputSchema, response_processor=dummy_processor, transformers=[dummy_transformer], is_match=always_true)
+    return RequestBuildMapping(title="Dummy", description="Dummy mapping", input_schema=GenericInputSchema, response_processor=dummy_processor, transformers=[dummy_transformer], is_match=always_true)
 
 
 @pytest.fixture
@@ -69,5 +69,5 @@ class TestRequestFactory:
         req = setup_factory.build_request(payload)
         assert isinstance(req, Request)
 
-    def test_is_match(self, payload, dummy_mapping: RequestFactoryMapping):
+    def test_is_match(self, payload, dummy_mapping: RequestBuildMapping):
         assert dummy_mapping.is_match(payload)

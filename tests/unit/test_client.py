@@ -56,16 +56,17 @@ class TestClient:
         assert completion_order == expected_order
 
     @pytest.mark.parametrize(
-        "mock_request_method, expected_type",
+        "mock_request_method, dummy_request, expected_status",
         [
-            ({"error": True}, type(None)),
-            ({"error": False}, ProcessedResponse),
+            ({"error": True}, {"error": "Some random exception", "status": None}, None),
+            ({"error": False}, {}, 200),
         ],
-        indirect=["mock_request_method"],
+        indirect=["mock_request_method", "dummy_request"],
     )
-    async def test_send(self, mock_request_method, monkeypatch, dummy_request, expected_type, loop):
+    async def test_send(self, mock_request_method, monkeypatch, dummy_request, expected_status, loop):
         client = Aiopulse()
         monkeypatch.setattr(aiohttp.ClientSession, "request", mock_request_method)
         async with aiohttp.ClientSession() as session:
             resp = await client.send(session, dummy_request())
-        assert isinstance(resp, expected_type)
+        assert isinstance(resp, ProcessedResponse)
+        assert resp.status == expected_status

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class ProcessedResponse(BaseModel):
     ok: bool
-    status: int = Field(ge=100, lt=600)
+    status: int | None = Field(ge=100, lt=600, default=None)
     content: list[dict[str, Any]] = Field(default_factory=list)
     error: str | None = None
     chain: list[dict[str, Any]] = Field(default_factory=list)

@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from .mapping import RequestFactoryMapping
+from .mapping import RequestBuildMapping
 from .request import Request
 from .transformer import TransformerBase
 
@@ -18,7 +18,7 @@ class RequestFactory:
         `build_request`: check if data matches any of the registered mappings and return a new Request
     """
 
-    mappings: list[RequestFactoryMapping]
+    mappings: list[RequestBuildMapping]
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
@@ -26,11 +26,11 @@ class RequestFactory:
         self.transformer_args = dict()
         self.logger.debug("RequestFactory initialized.")
 
-    def register_mapping(self, mapping: RequestFactoryMapping) -> None:
+    def register_mapping(self, mapping: RequestBuildMapping) -> None:
         """Register a new  mapping.
 
         Args:
-            mapping (RequestFactoryMapping): An object containing schema+transformer+response_processor+matcher - all the parts needed to build a new request
+            mapping (RequestBuildMapping): An object containing schema+transformer+response_processor+matcher - all the parts needed to build a new request
         """
         self.logger.info(f"New request mapping: {mapping}")
         self.mappings.append(mapping)

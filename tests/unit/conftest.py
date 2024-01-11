@@ -98,7 +98,8 @@ def dummy_processed_response(request):
         params = getattr(request, "param", dict())
         m.chain = list()
         m.pass_to_dependency = dict()
-        m.error = None
+        m.error = params.get("error", None)
+        m.status = params.get("status", 200)
         return m
 
     return _make

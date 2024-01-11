@@ -35,6 +35,21 @@ class RequestQueue:
         else:
             self._deferred_requests[dependency] = chain
 
+    async def build_and_add(self, factory: RequestFactory, data: dict[str, Any], chain_keyword: str = "chain", extra_args: dict[str, Any] = dict()) -> None:
+        request = factory.build_request(data, extra_input_args=extra_args)
+        await self.add(request)
+        chain = data.get(chain_keyword)
+        if chain:
+            self.defer(chain, request.id)
+
+    async def add_deferred(self, factory: RequestFactory, dependency: int, extra_input_args: dict[str, Any] = dict()) -> None:
+        self.logger.info("Fetching deferred requests for dependency %s...", dependency)
+        deferred = self.get_deferred(dependency)
+        if deferred:
+            self.logger.info("Found %s dependent requests. %s extra args will be passed to chained data.", len(deferred), len(extra_input_args))
+            for payload in deferred:
+                await self.build_and_add(factory, payload, extra_args=extra_input_args)
+
     def request_count(self) -> int:
         return self._queue.qsize()
 

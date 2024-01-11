@@ -20,4 +20,6 @@ pip install aiopulse
 
 # Usage
 
-Todo
+```python
+from aiopulse import Aiopulse
+```

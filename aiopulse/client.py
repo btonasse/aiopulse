@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Any
 
 import aiohttp
 from pydantic import BaseModel
@@ -13,7 +12,7 @@ from .response import ProcessedResponse
 
 class ProcessingResult(BaseModel):
     request: Request
-    response: ProcessedResponse | None
+    response: ProcessedResponse
 
 
 class Aiopulse:
@@ -40,19 +39,19 @@ class Aiopulse:
                 self.logger.info("No more requests to send.")
                 break
             tasks = [asyncio.create_task(self.send(session, request)) for request in batch]
-            processed_responses: list[ProcessedResponse | None] = await asyncio.gather(*tasks)
+            processed_responses: list[ProcessedResponse] = await asyncio.gather(*tasks)
             self.logger.info("Finished request batch.")
             for i, response in enumerate(processed_responses):
                 request = batch[i]
 
-                if response and response.ok:
+                if response.ok:
                     # Add new requests created by the response processor
                     if response.chain:
                         self.logger.info("Adding chained requests created by request id %s", request.id)
                         self.queue.defer(response.chain, request.id)
                     # Add deferred requests that depend on this response if any
                     try:
-                        await self.add_deferred_to_queue(request.id, response.pass_to_dependency)
+                        await self.queue.add_deferred(self.factory, request.id, response.pass_to_dependency)
                     except ValueError as err:
                         self.logger.warning("Failed to add dependent requests for request id %s. Error: %s.", request.id, err)
 
@@ -64,22 +63,7 @@ class Aiopulse:
 
         return results
 
-    async def build_and_add_to_queue(self, data: dict[str, Any], chain_keyword: str = "chain", extra_args: dict[str, Any] = dict()) -> None:
-        request = self.factory.build_request(data, extra_input_args=extra_args)
-        await self.queue.add(request)
-        chain = data.get(chain_keyword)
-        if chain:
-            self.queue.defer(chain, request.id)
-
-    async def add_deferred_to_queue(self, dependency: int, extra_input_args: dict[str, Any] = dict()) -> None:
-        self.logger.info("Fetching deferred requests for dependency %s...", dependency)
-        deferred = self.queue.get_deferred(dependency)
-        if deferred:
-            self.logger.info("Found %s dependent requests. %s extra args will be passed to chained data.", len(deferred), len(extra_input_args))
-            for payload in deferred:
-                await self.build_and_add_to_queue(payload, extra_args=extra_input_args)
-
-    async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse | None:
+    async def send(self, session: aiohttp.ClientSession, request: Request) -> ProcessedResponse:
         params = request.prepare()
         self.logger.info(f"Sending {request.method} request with id {request.id} to {request.url}...")
         try:
@@ -89,3 +73,4 @@ class Aiopulse:
         except aiohttp.ClientError as err:
             msg = f"{type(err).__name__}: {str(err)}"
             self.logger.error("Request id %s failed with error '%s'", request.id, msg)
+            return ProcessedResponse(error=msg, ok=False, content=[])
