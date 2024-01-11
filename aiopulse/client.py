@@ -1,10 +1,12 @@
 import asyncio
 import logging
+from typing import Any
 
 import aiohttp
 from pydantic import BaseModel
 
 from .factory import RequestFactory
+from .mapping import RequestBuildMapping
 from .queue import RequestQueue
 from .request import Request
 from .response import ProcessedResponse
@@ -23,6 +25,12 @@ class Aiopulse:
         self.queue = RequestQueue()
         self.factory = RequestFactory()
         self.logger.debug(f"Aiopulse client initialized with timeout {timeout}s")
+
+    def register_mapping(self, mapping: RequestBuildMapping) -> None:
+        self.factory.register_mapping(mapping)
+
+    async def build_and_add_to_queue(self, data: dict[str, Any], chain_keyword: str = "chain", extra_args: dict[str, Any] = dict()) -> None:
+        await self.queue.build_and_add(self.factory, data, chain_keyword=chain_keyword, extra_args=extra_args)
 
     async def process_queue(self, session: aiohttp.ClientSession, batch_size: int) -> list[ProcessingResult]:
         self.logger.info(f"Triggering queue processing. Batch size = {batch_size}")
